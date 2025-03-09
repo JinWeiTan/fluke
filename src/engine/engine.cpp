@@ -1,3 +1,8 @@
 #pragma once
 
-#include "piece.hpp"
+#include "engine.hpp"
+
+Engine Engine::init() {
+  Position* move = new Position{Board::init(), Move{}};
+  return Engine{move};
+}

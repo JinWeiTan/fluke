@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/board.hpp"
+#include "engine/engine.hpp"
 #include "message.hpp"
 #include "uwebsockets/App.h"
 #include <mutex>
@@ -9,17 +9,12 @@
 struct Player {
   uint8_t id;
   Colour colour;
-  Player() : id(), colour(Colour::White){};
-  Player(uint8_t id, Colour colour) : id(id), colour(colour){};
 };
 
 struct Game {
   uint8_t id;
   Player player;
-  Board board;
-  Game(): id(0), player(Player()), board(Board()){};
-  Game(uint8_t id, Player player, Board board)
-      : id(id), player(player), board(board){};
+  Engine engine;
 };
 
 struct Server {

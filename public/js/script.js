@@ -129,15 +129,16 @@ function onclick(e) {
     for (const move of game.pieceMoves) {
         if (move.square.x == squareX && move.square.y == squareY && move.id == game.piece.id) {
             if (move.type == 4) {
+                const moves = game.pieceMoves.filter(move =>
+                    move.type == 4 && move.square.x == squareX
+                    && move.square.y == squareY)
+                for (let i = 0; i < 4; i++) {
+                    pieces[i].dataset.move = moves[i].index
+                }
                 modal[0].style.display = "block"
                 return game.move = move
             } else {
-                game.socket.send(new Uint8Array(
-                    [
-                        1, game.piece.square.x, game.piece.square.y,
-                        move.square.x, move.square.y, move.type, 0
-                    ]
-                ))
+                game.socket.send(new Uint8Array([1, move.index]))
                 update(move)
                 return render()
             }
@@ -166,6 +167,7 @@ async function onmessage(message) {
         game.pieces[28].check = buffer[2]
         for (let i = 0; i < (buffer.length - 3) / 4; i++) {
             game.moves.push({
+                index: i,
                 id: buffer[i * 4 + 3],
                 type: buffer[i * 4 + 4],
                 square: { x: buffer[i * 4 + 5], y: buffer[i * 4 + 6] },
@@ -185,23 +187,17 @@ function onopen() {
     game.socket.send(new Uint8Array([0, 1]))
 }
 
-function onpromote() {
-    game.socket.send(new Uint8Array(
-        [
-            1, game.piece.square.x, game.piece.square.y,
-            game.move.square.x, game.move.square.y, game.move.type, 
-            parseInt(this.dataset.piece)
-        ]
-    ))
+function onpromote(move) {
+    game.socket.send(new Uint8Array([1, move.dataset.move]))
     const piece = game.pieces.find(piece => piece.id == game.move.id)
-    piece.img = new URL(this.src).pathname.slice(8, -4)
+    piece.img = new URL(move.src).pathname.slice(8, -4)
     update(game.move)
     render()
     modal[0].style.display = "none"
 }
 
 for (const piece in pieces) {
-    pieces[piece].onclick = onpromote
+    pieces[piece].onclick = () => onpromote(pieces[piece])
 }
 window.onload = () => setup()
 window.onresize = () => render()

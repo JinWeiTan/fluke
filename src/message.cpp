@@ -25,9 +25,7 @@ Message ClientConnect::decode(std::string_view buffer) {
 }
 
 Message ClientMove::decode(std::string_view buffer) {
-  Square from((uint8_t)buffer[1], (uint8_t)buffer[2]);
-  Square to((uint8_t)buffer[3], (uint8_t)buffer[4]);
-  return Message(ClientMove(from, to, (MoveType)buffer[5], (PieceType)buffer[6]));
+  return Message(ClientMove((uint8_t)buffer[1]));
 }
 
 std::string ServerMove::encode() {
@@ -36,10 +34,10 @@ std::string ServerMove::encode() {
   buffer.push_back(this->is_check_white);
   buffer.push_back(this->is_check_black);
   for (auto &&move : this->moves) {
-    buffer.push_back(move.piece.id);
-    buffer.push_back(move.type);
-    buffer.push_back(move.to.x);
-    buffer.push_back(move.to.y);
+    buffer.push_back(move->move.piece.id);
+    buffer.push_back(move->move.type);
+    buffer.push_back(move->move.to.x);
+    buffer.push_back(move->move.to.y);
   }
   return buffer;
 }

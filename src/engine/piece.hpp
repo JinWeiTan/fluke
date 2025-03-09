@@ -4,7 +4,6 @@
 #include <optional>
 #include <vector>
 
-
 enum Colour { Black, White };
 
 inline Colour opposite(Colour colour) { return static_cast<Colour>(!colour); };
@@ -15,7 +14,6 @@ enum MoveType { Step, DoubleStep, EnPassant, Castle, Promotion };
 
 struct Square {
   uint8_t x, y;
-  Square(uint8_t x, uint8_t y) : x(x), y(y){};
   bool operator==(const Square &square) {
     return this->x == square.x && this->y == square.y;
   };
@@ -23,6 +21,7 @@ struct Square {
 
 struct Move;
 struct Board;
+struct Position;
 
 struct Piece {
   uint8_t id;
@@ -30,9 +29,7 @@ struct Piece {
   Colour colour;
   Square square;
   bool taken;
-  Piece(uint8_t id, PieceType type, Colour colour, Square square)
-      : id(id), type(type), colour(colour), square(square), taken(false){};
-  std::vector<Move> get_moves(Board &board);
+  void get_moves(Board &board, std::vector<Position*> &moves);
 };
 
 struct Move {
@@ -40,6 +37,4 @@ struct Move {
   std::optional<Piece> takes;
   Square from, to;
   MoveType type;
-  Move(Piece piece, std::optional<Piece> takes, Square from, Square to, MoveType type)
-      : piece(piece), takes(takes), from(from), to(to), type(type){};
 };

@@ -1,6 +1,7 @@
 const canvas = document.getElementsByTagName("canvas")[0]
 const modal = document.getElementsByClassName("modal")
 const pieces = document.getElementsByClassName("piece")
+const result = document.getElementsByClassName("result")[0]
 const ctx = canvas.getContext("2d")
 const game = {
     socket: new WebSocket("ws://localhost:3000/"),
@@ -159,7 +160,6 @@ function onclick(e) {
 }
 
 async function onmessage(message) {
-    // const isStarted = game.moves.length != 0
     const buffer = new Uint8Array(await message.data.arrayBuffer());
     game.moves = []
     if (buffer[0] == 2) {
@@ -173,12 +173,11 @@ async function onmessage(message) {
                 square: { x: buffer[i * 4 + 5], y: buffer[i * 4 + 6] },
             })
         }
-        // if (isStarted) {
-        //     const move = game.moves.pop()
-        //     const piece = game.pieces.find(piece => piece.id == move.id)
-        //     piece.square = move.square
-        //     render()
-        // }
+    }
+    if (game.moves.length == 0) {
+        result.childNodes[3].innerText = `${game.turn == "white" ? "Black" : "White"} wins!`
+        result.style.display = "block";
+        game.socket.close()
     }
     render()
 }
@@ -199,7 +198,8 @@ function onpromote(move) {
 for (const piece in pieces) {
     pieces[piece].onclick = () => onpromote(pieces[piece])
 }
-window.onload = () => setup()
+
+setup()
 window.onresize = () => render()
 canvas.onclick = onclick
 window.onclick = () => render()

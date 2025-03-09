@@ -76,7 +76,9 @@ void Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
   if (this->board[to.x][to.y] != EMPTY) {
     position->move.takes = this->pieces[this->board[to.x][to.y]];
   }
-  moves.push_back(position);
+  if (!position->board.is_check(piece.colour)) {
+    moves.push_back(position);
+  }
 }
 
 bool Board::is_occupied(Square &square) {
@@ -92,8 +94,6 @@ bool Board::in_bounds(Square &square) {
   return square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7;
 }
 
-bool Board::is_check(Colour colour) { return false; }
-
 void Board::display() {
   for (size_t i = 0; i < 8; i++) {
     for (size_t j = 0; j < 8; j++) {
@@ -107,4 +107,56 @@ void Board::display() {
     printf("\n");
   }
   printf("\n");
+}
+
+bool is_check_inner(Piece &piece, Board &board, int a, int b,
+                    PieceType expect) {
+  Square square(piece.square.x + a, piece.square.y + b);
+  while (board.in_bounds(square)) {
+    if (board.is_occupied(square)) {
+      Piece &target = board.pieces[board.board[square.x][square.y]];
+      if (target.colour != piece.colour &&
+          (target.type == PieceType::Queen || target.type == expect)) {
+        return true;
+      }
+      return false;
+    }
+    square.x += a, square.y += b;
+  }
+  return false;
+};
+
+bool is_check_inner_single(Piece &piece, Board &board, int a, int b,
+                           PieceType expect) {
+  Square square(piece.square.x + a, piece.square.y + b);
+  if (board.in_bounds(square) && board.is_occupied(square)) {
+    Piece &target = board.pieces[board.board[square.x][square.y]];
+    if ((target.colour != piece.colour) && (target.type == expect)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+bool Board::is_check(Colour colour) {
+  Piece &piece = this->pieces[colour == Colour::White ? 12 : 28];
+  int step = colour == Colour::White ? 1 : -1;
+  return is_check_inner(piece, *this, 1, 1, PieceType::Bishop) ||
+         is_check_inner(piece, *this, -1, 1, PieceType::Bishop) ||
+         is_check_inner(piece, *this, 1, -1, PieceType::Bishop) ||
+         is_check_inner(piece, *this, -1, -1, PieceType::Bishop) ||
+         is_check_inner(piece, *this, 1, 0, PieceType::Rook) ||
+         is_check_inner(piece, *this, -1, 0, PieceType::Rook) ||
+         is_check_inner(piece, *this, 0, 1, PieceType::Rook) ||
+         is_check_inner(piece, *this, 0, -1, PieceType::Rook) ||
+         is_check_inner_single(piece, *this, 1, 2, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, 1, -2, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, -1, 2, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, -1, -2, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, 2, 1, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, 2, -1, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, -2, 1, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, -2, -1, PieceType::Knight) ||
+         is_check_inner_single(piece, *this, 1, step, PieceType::Pawn) ||
+         is_check_inner_single(piece, *this, -1, step, PieceType::Pawn);
 }

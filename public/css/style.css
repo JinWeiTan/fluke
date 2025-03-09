@@ -47,6 +47,10 @@
   display: none;
 }
 
+.result {
+  display: none;
+}
+
 .grid {
   position: absolute;
   background-color: white;
@@ -56,6 +60,19 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.winner {
+  position: absolute;
+  background-color: white;
+  border-radius: 5px;
+  border:black 1px solid;
+  padding: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 40px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .piece {

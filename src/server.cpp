@@ -49,10 +49,3 @@ void Server::send_message(Message &message, PerSocketData *socket_data) {
   auto ws = this->sockets[socket_data->client_id];
   ws->send(message.encode(), uWS::OpCode::BINARY);
 }
-
-// void Server::send_message(Message &message) {
-//   this->loop->defer([this, &message]() {
-//     auto ws = this->sockets[message.client_id];
-//     ws->send(message.encode(), uWS::OpCode::BINARY);
-//   });
-// }

@@ -71,12 +71,13 @@ void Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
                      MoveType type) {
   Piece &piece = this->pieces[this->board[from.x][from.y]];
   Move move = Move{piece, std::nullopt, from, to, type};
-  Position *position = new Position{*this, move};
-  position->board.make_move(move);
+  Board *board = new Board{this->pieces, this->board};
+  Position *position = new Position{board, move};
+  position->board->make_move(move);
   if (this->board[to.x][to.y] != EMPTY) {
     position->move.takes = this->pieces[this->board[to.x][to.y]];
   }
-  if (!position->board.is_check(piece.colour)) {
+  if (!position->board->is_check(piece.colour)) {
     moves.push_back(position);
   }
 }
@@ -95,8 +96,8 @@ bool Board::in_bounds(Square &square) {
 }
 
 void Board::display() {
-  for (size_t i = 0; i < 8; i++) {
-    for (size_t j = 0; j < 8; j++) {
+  for (int i = 7; i >= 0; i--) {
+    for (int j = 0; j <= 7; j++) {
       if (this->board[j][i] == EMPTY) {
         printf("x ");
       } else {
@@ -159,4 +160,14 @@ bool Board::is_check(Colour colour) {
          is_check_inner_single(piece, *this, -2, -1, PieceType::Knight) ||
          is_check_inner_single(piece, *this, 1, step, PieceType::Pawn) ||
          is_check_inner_single(piece, *this, -1, step, PieceType::Pawn);
+}
+
+int8_t Board::evaluate(Colour colour) {
+  int8_t eval = 0;
+  for (auto &&piece : this->pieces) {
+    if (!piece.taken) {
+      eval += PieceValue[piece.type] * ((piece.colour == colour) ? -1 : 1);
+    }
+  }
+  return eval;
 }

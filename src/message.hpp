@@ -21,23 +21,17 @@ struct PerSocketData {
 
 struct ClientConnect {
   Colour colour;
-  ClientConnect(Colour colour) : colour(colour){};
   static Message decode(std::string_view buffer);
 };
 
 struct ClientMove {
   uint8_t move;
-  ClientMove(uint16_t move) : move(move){};
   static Message decode(std::string_view buffer);
 };
 
 struct ServerMove {
-  bool is_check_white;
-  bool is_check_black;
-  std::vector<Position*> moves;
-  ServerMove(bool is_check_white, bool is_check_black, std::vector<Position*> moves)
-      : is_check_white(is_check_white), is_check_black(is_check_black),
-        moves(moves){};
+  Position *move;
+  std::vector<Position *> moves;
   std::string encode();
 };
 
@@ -45,6 +39,5 @@ struct Message {
   using MessageData = std::variant<ClientConnect, ClientMove, ServerMove>;
   MessageData data;
   std::string encode();
-  Message(MessageData data) : data(data){};
   static Message decode(std::string_view buffer);
 };

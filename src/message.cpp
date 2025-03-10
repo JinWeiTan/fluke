@@ -31,8 +31,17 @@ Message ClientMove::decode(std::string_view buffer) {
 std::string ServerMove::encode() {
   std::string buffer = "";
   buffer.push_back(MessageType::ServerMoveType);
-  buffer.push_back(this->is_check_white);
-  buffer.push_back(this->is_check_black);
+  if (this->move != NULL) {
+    buffer.push_back(this->move->move.piece.id);
+    buffer.push_back(this->move->move.type);
+    buffer.push_back(this->move->move.to.x);
+    buffer.push_back(this->move->move.to.y);
+  } else {
+    for (size_t i = 0; i < 4; i++) {
+      buffer.push_back(0);
+    }
+  }
+
   for (auto &&move : this->moves) {
     buffer.push_back(move->move.piece.id);
     buffer.push_back(move->move.type);

@@ -2,6 +2,7 @@
 #include "board.hpp"
 #include "engine.hpp"
 #include <optional>
+#include <string>
 
 void get_move_inner(Piece &piece, Board &board, std::vector<Position *> &moves,
                     int a, int b) {
@@ -74,7 +75,7 @@ void get_pawn_moves(Piece &piece, Board &board,
         Position *move = new Position{moves[i]->board, moves[i]->move};
         move->move.type = MoveType::Promotion;
         move->move.piece.type = static_cast<PieceType>(j + 1);
-        move->board.pieces[move->move.piece.id].type = move->move.piece.type; 
+        move->board->pieces[move->move.piece.id].type = move->move.piece.type; 
         promotion.push_back(move);
       }
     }
@@ -149,4 +150,12 @@ void Piece::get_moves(Board &board, std::vector<Position *> &moves) {
   case PieceType::King:
     return get_king_moves(*this, board, moves);
   }
+}
+
+std::string Move::get_name() {
+  return PieceName[this->piece.type] + this->to.get_name();
+}
+
+std::string Square::get_name() {
+  return FileName[this->x] + RankName[this->y];
 }

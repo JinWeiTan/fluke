@@ -20,6 +20,9 @@ function render() {
     canvas.height = canvas.getBoundingClientRect().height
     const squareWidth = canvas.height / 8
 
+    game.pieces[12].check = isCheck("white")
+    game.pieces[28].check = isCheck("black")
+
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             const moves = [...game.pieceMoves, game.piece]
@@ -161,17 +164,23 @@ function onclick(e) {
 
 async function onmessage(message) {
     const buffer = new Uint8Array(await message.data.arrayBuffer());
+    let move;
+    const isFirst = game.moves.length == 0
     game.moves = []
     if (buffer[0] == 2) {
-        game.pieces[12].check = buffer[1]
-        game.pieces[28].check = buffer[2]
-        for (let i = 0; i < (buffer.length - 3) / 4; i++) {
+        for (let i = 0; i < (buffer.length - 1) / 4; i++) {
             game.moves.push({
-                index: i,
-                id: buffer[i * 4 + 3],
-                type: buffer[i * 4 + 4],
-                square: { x: buffer[i * 4 + 5], y: buffer[i * 4 + 6] },
+                index: i - 1,
+                id: buffer[i * 4 + 1],
+                type: buffer[i * 4 + 2],
+                square: { x: buffer[i * 4 + 3], y: buffer[i * 4 + 4] },
             })
+        }
+        if (!isFirst) {
+            move = game.moves.shift();
+            game.piece = game.pieces[move.id]
+            update(move)
+            render()
         }
     }
     if (game.moves.length == 0) {
@@ -198,6 +207,62 @@ function onpromote(move) {
 for (const piece in pieces) {
     pieces[piece].onclick = () => onpromote(pieces[piece])
 }
+
+function isCheckInner(piece, a, b, expect) {
+    const square = { x: piece.square.x + a, y: piece.square.y + b };
+    while (inBounds(square)) {
+        const target = game.pieces.find(({ x, y }) => square.x == x && square.y == y);
+        if (target) {
+            if (target.img.slice(0, 5) != piece.slice(0, 5) &&
+                (target.img.slice(6) == "queen" || target.img.slice(6) == expect)) {
+                return true;
+            }
+            return false;
+        }
+        square.x += a, square.y += b;
+    }
+    return false;
+};
+
+function isCheckInnerSingle(piece, a, b, expect) {
+    const square = { x: piece.square.x + a, y: piece.square.y + b };
+    const target = game.pieces.find(({ x, y }) => square.x == x && square.y == y);
+    if (inBounds(square) && target) {
+        if (target.img.slice(0, 5) != piece.slice(0, 5) &&
+            target.img.slice(6) == expect) {
+            return true;
+        }
+    }
+    return false;
+};
+
+function isCheck(colour) {
+    const piece = game.pieces[colour == "white" ? 12 : 28];
+    const step = colour == "white" ? 1 : -1;
+    return isCheckInner(piece, 1, 1, "bishop") ||
+        isCheckInner(piece, -1, 1, "bishop") ||
+        isCheckInner(piece, 1, -1, "bishop") ||
+        isCheckInner(piece, -1, -1, "bishop") ||
+        isCheckInner(piece, 1, 0, "rook") ||
+        isCheckInner(piece, -1, 0, "rook") ||
+        isCheckInner(piece, 0, 1, "rook") ||
+        isCheckInner(piece, 0, -1, "rook") ||
+        isCheckInnerSingle(piece, 1, 2, "knight") ||
+        isCheckInnerSingle(piece, 1, -2, "knight") ||
+        isCheckInnerSingle(piece, -1, 2, "knight") ||
+        isCheckInnerSingle(piece, -1, -2, "knight") ||
+        isCheckInnerSingle(piece, 2, 1, "knight") ||
+        isCheckInnerSingle(piece, 2, -1, "knight") ||
+        isCheckInnerSingle(piece, -2, 1, "knight") ||
+        isCheckInnerSingle(piece, -2, -1, "knight") ||
+        isCheckInnerSingle(piece, 1, step, "pawn") ||
+        isCheckInnerSingle(piece, -1, step, "pawn");
+}
+
+function inBounds(square) {
+    return square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7;
+}
+
 
 setup()
 window.onresize = () => render()

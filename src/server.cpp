@@ -19,8 +19,8 @@ void Server::handle_client_connect(Message &message,
   socket_data->game_id = this->game_id;
   this->game_id++;
   if (player.colour == Colour::White) {
-    game.engine.move->board.get_moves(game.engine.move->next, player.colour);
-    Message message = Message(ServerMove(false, false, game.engine.move->next));
+    game.engine.get_moves(1);
+    Message message = Message(ServerMove(NULL, game.engine.move->next));
     this->send_message(message, socket_data);
   }
 }
@@ -29,14 +29,14 @@ void Server::handle_client_move(Message &message, PerSocketData *socket_data) {
   ClientMove data = std::get<ClientMove>(message.data);
   Game &game = this->games[socket_data->game_id];
   game.engine.move = game.engine.move->next[data.move];
-  game.engine.move->board.display();
+  game.engine.board->make_move(game.engine.move->move);
+  // game.engine.board->display();
 
-  game.player.colour = opposite(game.player.colour);
-  bool is_check_white = game.engine.move->board.is_check(Colour::White);
-  bool is_check_black = game.engine.move->board.is_check(Colour::Black);
-  game.engine.move->board.get_moves(game.engine.move->next, game.player.colour);
+  game.engine.get_moves(4);
+  game.engine.move = game.engine.search_moves(4);
+  game.engine.board->make_move(game.engine.move->move);
   Message server_message =
-      Message(ServerMove(is_check_white, is_check_black, game.engine.move->next));
+      Message(ServerMove(game.engine.move, game.engine.move->next));
   this->send_message(server_message, socket_data);
 }
 

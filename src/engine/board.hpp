@@ -22,11 +22,13 @@ struct Board {
   bool is_occupied(Square &square, Colour colour);
   bool in_bounds(Square &square);
   bool is_check(Colour colour);
+  int8_t evaluate(Colour colour);
   void display();
 };
 
 struct Position {
-  Board board;
+  Board* board;
   Move move;
   std::vector<Position*> next;
+  int8_t eval;
 };

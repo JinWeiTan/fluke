@@ -164,6 +164,15 @@ function onclick(e) {
 
 async function onmessage(message) {
     const buffer = new Uint8Array(await message.data.arrayBuffer());
+    if (buffer[0] == 3) {
+        let msg = "Stalemate!"
+        if (isCheck(game.turn)) {
+            msg= `${game.turn == "white" ? "Black" : "White"} wins!`
+        }
+        result.childNodes[3].innerText = msg
+        result.style.display = "block";
+        game.socket.close()
+    }
     let move;
     const isFirst = game.moves.length == 0
     game.moves = []
@@ -184,7 +193,11 @@ async function onmessage(message) {
         }
     }
     if (game.moves.length == 0) {
-        result.childNodes[3].innerText = `${game.turn == "white" ? "Black" : "White"} wins!`
+        let msg = "Stalemate!"
+        if (isCheck(game.turn)) {
+            msg= `${game.turn == "white" ? "Black" : "White"} wins!`
+        }
+        result.childNodes[3].innerText = msg
         result.style.display = "block";
         game.socket.close()
     }

@@ -8,6 +8,8 @@
 std::string Message::encode() {
   if (holds_alternative<ServerMove>(this->data)) {
     return std::get<ServerMove>(this->data).encode();
+  } else if (holds_alternative<ServerClose>(this->data)) {
+    return std::get<ServerClose>(this->data).encode();
   }
 }
 
@@ -26,6 +28,12 @@ Message ClientConnect::decode(std::string_view buffer) {
 
 Message ClientMove::decode(std::string_view buffer) {
   return Message(ClientMove((uint8_t)buffer[1]));
+}
+
+std::string ServerClose::encode() {
+  std::string buffer = "";
+  buffer.push_back(MessageType::ServerCloseType);
+  return buffer;
 }
 
 std::string ServerMove::encode() {

@@ -79,6 +79,9 @@ void Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
   }
   if (!position->board->is_check(piece.colour)) {
     moves.push_back(position);
+  } else {
+    delete board;
+    delete position;
   }
 }
 

@@ -10,6 +10,7 @@ enum MessageType {
   ClientConnectType,
   ClientMoveType,
   ServerMoveType,
+  ServerCloseType,
 };
 
 struct Message;
@@ -35,9 +36,14 @@ struct ServerMove {
   std::string encode();
 };
 
+struct ServerClose {
+  std::string encode();
+};
+
 struct Message {
-  using MessageData = std::variant<ClientConnect, ClientMove, ServerMove>;
+  using MessageData = std::variant<ClientConnect, ClientMove, ServerMove, ServerClose>;
   MessageData data;
   std::string encode();
   static Message decode(std::string_view buffer);
 };
+

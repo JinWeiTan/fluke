@@ -32,8 +32,14 @@ void Server::handle_client_move(Message &message, PerSocketData *socket_data) {
   game.engine.board->make_move(game.engine.move->move);
   // game.engine.board->display();
 
-  game.engine.get_moves(4);
-  game.engine.move = game.engine.search_moves(4);
+  game.engine.get_moves(3);
+  int move = game.engine.search_moves(3);
+  if (move == -1) {
+    Message server_message = Message(ServerClose());
+    return this->send_message(server_message, socket_data);
+  }
+  game.engine.clean_moves(move);
+  game.engine.move = game.engine.move->next[move];
   game.engine.board->make_move(game.engine.move->move);
   Message server_message =
       Message(ServerMove(game.engine.move, game.engine.move->next));

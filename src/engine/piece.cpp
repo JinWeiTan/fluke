@@ -27,14 +27,8 @@ void get_move_inner_single(Piece &piece, Board &board,
 void get_pawn_moves(Piece &piece, Board &board,
                     std::vector<Position *> &moves) {
   int step = piece.colour == Colour::White ? 1 : -1;
-  // Single pawn move
-  Square square(piece.square.x, piece.square.y + step);
-  if (board.in_bounds(square) && !board.is_occupied(square)) {
-    board.get_move(moves, piece.square, square, MoveType::Step);
-  }
-
   // Diagonal pawn capture
-  square = Square(piece.square.x + 1, piece.square.y + step);
+  Square square(piece.square.x + 1, piece.square.y + step);
   if (board.in_bounds(square) &&
       board.is_occupied(square, opposite(piece.colour))) {
     board.get_move(moves, piece.square, square, MoveType::Step);
@@ -55,6 +49,12 @@ void get_pawn_moves(Piece &piece, Board &board,
     }
   }
 
+  // Single pawn move
+  square = Square(piece.square.x, piece.square.y + step);
+  if (board.in_bounds(square) && !board.is_occupied(square)) {
+    board.get_move(moves, piece.square, square, MoveType::Step);
+  }
+
   // En passant
   square = Square(piece.square.x + 1, piece.square.y);
   if (board.last_move_double_step) {
@@ -70,12 +70,15 @@ void get_pawn_moves(Piece &piece, Board &board,
   // Promotion
   if (piece.square.y == (piece.colour == Colour::White ? 6 : 1)) {
     std::vector<Position *> promotion;
-    for (int i = 0; i < moves.size(); i += 1) {
-      for (int j = 0; j < 4; j += 1) {
-        Position *move = new Position{moves[i]->board, moves[i]->move};
+    int len = moves.size();
+    for (int i = 0; i < len; i += 1) {
+      for (int j = 3; j >= 0; j -= 1) {
+        Board *board = new Board{};
+        *board = *moves[i]->board;
+        Position *move = new Position{board, moves[i]->move};
         move->move.type = MoveType::Promotion;
         move->move.piece.type = static_cast<PieceType>(j + 1);
-        move->board->pieces[move->move.piece.id].type = move->move.piece.type; 
+        move->board->pieces[move->move.piece.id].type = move->move.piece.type;
         promotion.push_back(move);
       }
     }
@@ -133,6 +136,51 @@ void get_king_moves(Piece &piece, Board &board,
   get_move_inner_single(piece, board, moves, -1, 0);
   get_move_inner_single(piece, board, moves, 0, 1);
   get_move_inner_single(piece, board, moves, 0, -1);
+
+  // Castling
+  if (piece.colour == Colour::White) {
+    if (board.castling.black_kingside) {
+      Square square1 = Square{5, 0}, square2 = Square{6, 0};
+      if (!board.is_occupied(square1) && !board.is_occupied(square2)) {
+        if (!board.is_check_at(square1, Colour::White) &&
+            !board.is_check_at(square2, Colour::White)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle);
+        }
+      }
+    }
+    if (board.castling.white_queenside) {
+      Square square1 = Square{3, 0}, square2 = Square{2, 0},
+             square3 = Square{1, 0};
+      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+          !board.is_occupied(square3)) {
+        if (!board.is_check_at(square1, Colour::White) &&
+            !board.is_check_at(square2, Colour::White)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle);
+        }
+      }
+    }
+  } else {
+    if (board.castling.black_kingside) {
+      Square square1 = Square{5, 7}, square2 = Square{6, 7};
+      if (!board.is_occupied(square1) && !board.is_occupied(square2)) {
+        if (!board.is_check_at(square1, Colour::Black) &&
+            !board.is_check_at(square2, Colour::Black)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle);
+        }
+      }
+    }
+    if (board.castling.black_queenside) {
+      Square square1 = Square{3, 7}, square2 = Square{2, 7},
+             square3 = Square{1, 7};
+      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+          !board.is_occupied(square3)) {
+        if (!board.is_check_at(square1, Colour::Black) &&
+            !board.is_check_at(square2, Colour::Black)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle);
+        }
+      }
+    }
+  }
 }
 
 void Piece::get_moves(Board &board, std::vector<Position *> &moves) {
@@ -156,6 +204,4 @@ std::string Move::get_name() {
   return PieceName[this->piece.type] + this->to.get_name();
 }
 
-std::string Square::get_name() {
-  return FileName[this->x] + RankName[this->y];
-}
+std::string Square::get_name() { return FileName[this->x] + RankName[this->y]; }

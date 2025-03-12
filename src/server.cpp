@@ -20,7 +20,7 @@ void Server::handle_client_connect(Message &message,
   this->game_id++;
   if (player.colour == Colour::White) {
     game.engine.get_moves(1);
-    Message message = Message(ServerMove(NULL, game.engine.move->next));
+    Message message = Message(ServerMove(game.engine.move));
     this->send_message(message, socket_data);
   }
 }
@@ -41,8 +41,7 @@ void Server::handle_client_move(Message &message, PerSocketData *socket_data) {
   game.engine.clean_moves(move);
   game.engine.move = game.engine.move->next[move];
   game.engine.board->make_move(game.engine.move->move);
-  Message server_message =
-      Message(ServerMove(game.engine.move, game.engine.move->next));
+  Message server_message = Message(ServerMove(game.engine.move));
   this->send_message(server_message, socket_data);
 }
 

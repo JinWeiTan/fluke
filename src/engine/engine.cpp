@@ -48,10 +48,10 @@ int Engine::search_moves(int depth) {
     Position *move = this->move->next[i];
     move->board = NULL;
     int8_t score = -search_moves_inner(depth - 1, move);
-    if ((move->move.to.x == 3 || move->move.to.x == 4) &&
-        (move->move.to.y == 3 || move->move.to.y == 4)) {
-      score += 1;
-    }
+    // if ((move->move.to.x == 3 || move->move.to.x == 4) &&
+    //     (move->move.to.y == 3 || move->move.to.y == 4)) {
+    //   score += 1;
+    // }
     if (score > max) {
       max = score;
       best = i;

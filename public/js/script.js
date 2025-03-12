@@ -71,14 +71,14 @@ function loadImage(url) {
 
 function setup() {
     game.pieces.push(
-        { id: 0, square: { x: 0, y: 1 }, img: 'white-pawn' },
-        { id: 1, square: { x: 1, y: 1 }, img: 'white-pawn' },
-        { id: 2, square: { x: 2, y: 1 }, img: 'white-pawn' },
-        { id: 3, square: { x: 3, y: 1 }, img: 'white-pawn' },
-        { id: 4, square: { x: 4, y: 1 }, img: 'white-pawn' },
-        { id: 5, square: { x: 5, y: 1 }, img: 'white-pawn' },
-        { id: 6, square: { x: 6, y: 1 }, img: 'white-pawn' },
-        { id: 7, square: { x: 7, y: 1 }, img: 'white-pawn' },
+        { id: 0, square: { x: 4, y: 1 }, img: 'white-pawn' },
+        { id: 1, square: { x: 3, y: 1 }, img: 'white-pawn' },
+        { id: 2, square: { x: 5, y: 1 }, img: 'white-pawn' },
+        { id: 3, square: { x: 2, y: 1 }, img: 'white-pawn' },
+        { id: 4, square: { x: 6, y: 1 }, img: 'white-pawn' },
+        { id: 5, square: { x: 1, y: 1 }, img: 'white-pawn' },
+        { id: 6, square: { x: 7, y: 1 }, img: 'white-pawn' },
+        { id: 7, square: { x: 0, y: 1 }, img: 'white-pawn' },
         { id: 8, square: { x: 0, y: 0 }, img: 'white-rook' },
         { id: 9, square: { x: 1, y: 0 }, img: 'white-knight' },
         { id: 10, square: { x: 2, y: 0 }, img: 'white-bishop' },
@@ -87,14 +87,14 @@ function setup() {
         { id: 13, square: { x: 5, y: 0 }, img: 'white-bishop' },
         { id: 14, square: { x: 6, y: 0 }, img: 'white-knight' },
         { id: 15, square: { x: 7, y: 0 }, img: 'white-rook' },
-        { id: 16, square: { x: 0, y: 6 }, img: 'black-pawn' },
-        { id: 17, square: { x: 1, y: 6 }, img: 'black-pawn' },
-        { id: 18, square: { x: 2, y: 6 }, img: 'black-pawn' },
-        { id: 19, square: { x: 3, y: 6 }, img: 'black-pawn' },
-        { id: 20, square: { x: 4, y: 6 }, img: 'black-pawn' },
-        { id: 21, square: { x: 5, y: 6 }, img: 'black-pawn' },
-        { id: 22, square: { x: 6, y: 6 }, img: 'black-pawn' },
-        { id: 23, square: { x: 7, y: 6 }, img: 'black-pawn' },
+        { id: 16, square: { x: 4, y: 6 }, img: 'black-pawn' },
+        { id: 17, square: { x: 3, y: 6 }, img: 'black-pawn' },
+        { id: 18, square: { x: 5, y: 6 }, img: 'black-pawn' },
+        { id: 19, square: { x: 2, y: 6 }, img: 'black-pawn' },
+        { id: 20, square: { x: 6, y: 6 }, img: 'black-pawn' },
+        { id: 21, square: { x: 1, y: 6 }, img: 'black-pawn' },
+        { id: 22, square: { x: 7, y: 6 }, img: 'black-pawn' },
+        { id: 23, square: { x: 0, y: 6 }, img: 'black-pawn' },
         { id: 24, square: { x: 0, y: 7 }, img: 'black-rook' },
         { id: 25, square: { x: 1, y: 7 }, img: 'black-knight' },
         { id: 26, square: { x: 2, y: 7 }, img: 'black-bishop' },
@@ -115,6 +115,24 @@ function update(move) {
             piece.square.y == targetY) {
             piece.alive = false
         }
+    }
+    if (move.type == 3) {
+        if (game.turn == "white") {
+            if (move.square.x == 2) {
+                game.pieces[8].square.x = 3;
+            } else {
+                game.pieces[15].square.x = 5;
+            }
+        } else {
+            if (move.square.x == 2) {
+                game.pieces[24].square.x = 3;
+            } else {
+                game.pieces[31].square.x = 5;
+            }
+        }
+    }
+    if (move.promote) {
+        game.piece.img = game.turn + new URL(pieces[move.promote - 1].src).pathname.slice(13, -4)
     }
     game.piece.square = move.square
     game.turn = game.turn == "white" ? "black" : "white"
@@ -167,7 +185,7 @@ async function onmessage(message) {
     if (buffer[0] == 3) {
         let msg = "Stalemate!"
         if (isCheck(game.turn)) {
-            msg= `${game.turn == "white" ? "Black" : "White"} wins!`
+            msg = `${game.turn == "white" ? "Black" : "White"} wins!`
         }
         result.childNodes[3].innerText = msg
         result.style.display = "block";
@@ -185,8 +203,11 @@ async function onmessage(message) {
                 square: { x: buffer[i * 4 + 3], y: buffer[i * 4 + 4] },
             })
         }
+        move = game.moves.shift();
+        if (move.type == 4) {
+            move.promote = buffer[buffer.length - 1]
+        }
         if (!isFirst) {
-            move = game.moves.shift();
             game.piece = game.pieces[move.id]
             update(move)
             render()
@@ -195,7 +216,7 @@ async function onmessage(message) {
     if (game.moves.length == 0) {
         let msg = "Stalemate!"
         if (isCheck(game.turn)) {
-            msg= `${game.turn == "white" ? "Black" : "White"} wins!`
+            msg = `${game.turn == "white" ? "Black" : "White"} wins!`
         }
         result.childNodes[3].innerText = msg
         result.style.display = "block";
@@ -224,9 +245,11 @@ for (const piece in pieces) {
 function isCheckInner(piece, a, b, expect) {
     const square = { x: piece.square.x + a, y: piece.square.y + b };
     while (inBounds(square)) {
-        const target = game.pieces.find(({ x, y }) => square.x == x && square.y == y);
+        const target = game.pieces.find(piece =>
+            piece.alive && square.x == piece.square.x && square.y == piece.square.y
+        );
         if (target) {
-            if (target.img.slice(0, 5) != piece.slice(0, 5) &&
+            if (target.img.slice(0, 5) != piece.img.slice(0, 5) &&
                 (target.img.slice(6) == "queen" || target.img.slice(6) == expect)) {
                 return true;
             }
@@ -239,9 +262,11 @@ function isCheckInner(piece, a, b, expect) {
 
 function isCheckInnerSingle(piece, a, b, expect) {
     const square = { x: piece.square.x + a, y: piece.square.y + b };
-    const target = game.pieces.find(({ x, y }) => square.x == x && square.y == y);
+    const target = game.pieces.find(piece =>
+        piece.alive && square.x == piece.square.x && square.y == piece.square.y
+    );
     if (inBounds(square) && target) {
-        if (target.img.slice(0, 5) != piece.slice(0, 5) &&
+        if (target.img.slice(0, 5) != piece.img.slice(0, 5) &&
             target.img.slice(6) == expect) {
             return true;
         }

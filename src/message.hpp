@@ -32,7 +32,6 @@ struct ClientMove {
 
 struct ServerMove {
   Position *move;
-  std::vector<Position *> moves;
   std::string encode();
 };
 

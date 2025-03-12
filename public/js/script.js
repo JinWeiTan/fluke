@@ -155,7 +155,7 @@ function onclick(e) {
                     move.type == 4 && move.square.x == squareX
                     && move.square.y == squareY)
                 for (let i = 0; i < 4; i++) {
-                    pieces[i].dataset.move = moves[i].index
+                    pieces[i].dataset.move = moves[3 - i].index
                 }
                 modal[0].style.display = "block"
                 return game.move = move

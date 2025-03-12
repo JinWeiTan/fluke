@@ -6,7 +6,7 @@ struct Engine {
     Board* board;
     Position* move;
     static Engine init();
-    void get_moves(int depth);
+    void make_move(int move);
     int search_moves(int depth);
     void clean_moves(int except);
 };

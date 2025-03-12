@@ -2,6 +2,7 @@
 #include "engine.hpp"
 #include "piece.hpp"
 #include <type_traits>
+#include <iostream>
 
 Board Board::init() {
   std::vector<Piece> pieces = {
@@ -43,7 +44,7 @@ Board Board::init() {
     board[piece.square.x][piece.square.y] = piece.id;
   }
 
-  return Board{pieces, board, Castling{true, true, true, true}, false};
+  return Board{pieces, board, Castling{true, true}, false};
 }
 
 void Board::make_move(Move &move) {
@@ -81,26 +82,16 @@ void Board::make_move(Move &move) {
   }
   if (move.piece.type == PieceType::Rook) {
     if (move.piece.colour == Colour::White) {
-      if (move.piece.id == 8) {
-        this->castling.white_queenside = false;
-      } else {
-        this->castling.white_kingside = false;
-      }
+      this->castling.white = false;
     } else {
-      if (move.piece.id == 24) {
-        this->castling.black_queenside = false;
-      } else {
-        this->castling.black_kingside = false;
-      }
+      this->castling.black = false;
     }
   }
   if (move.piece.type == PieceType::King) {
     if (move.piece.colour == Colour::White) {
-      this->castling.white_kingside = false;
-      this->castling.white_queenside = false;
+      this->castling.white = false;
     } else {
-      this->castling.black_kingside = false;
-      this->castling.black_queenside = false;
+      this->castling.black = false;
     }
   }
 }
@@ -178,8 +169,8 @@ bool is_check_inner(Square &from, Colour colour, Board &board, int a, int b,
   return false;
 };
 
-bool is_check_inner_single(Square &from, Colour colour, Board &board, int a,
-                           int b, PieceType expect) {
+bool is_check_single(Square &from, Colour colour, Board &board, int a, int b,
+                     PieceType expect) {
   Square square(from.x + a, from.y + b);
   if (board.in_bounds(square) && board.is_occupied(square)) {
     Piece &target = board.pieces[board.board[square.x][square.y]];
@@ -205,26 +196,16 @@ bool Board::is_check_at(Square &square, Colour colour) {
          is_check_inner(square, colour, *this, -1, 0, PieceType::Rook) ||
          is_check_inner(square, colour, *this, 0, 1, PieceType::Rook) ||
          is_check_inner(square, colour, *this, 0, -1, PieceType::Rook) ||
-         is_check_inner_single(square, colour, *this, 1, 2,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, 1, -2,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, -1, 2,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, -1, -2,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, 2, 1,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, 2, -1,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, -2, 1,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, -2, -1,
-                               PieceType::Knight) ||
-         is_check_inner_single(square, colour, *this, 1, step,
-                               PieceType::Pawn) ||
-         is_check_inner_single(square, colour, *this, -1, step,
-                               PieceType::Pawn);
+         is_check_single(square, colour, *this, 1, 2, PieceType::Knight) ||
+         is_check_single(square, colour, *this, 1, -2, PieceType::Knight) ||
+         is_check_single(square, colour, *this, -1, 2, PieceType::Knight) ||
+         is_check_single(square, colour, *this, -1, -2, PieceType::Knight) ||
+         is_check_single(square, colour, *this, 2, 1, PieceType::Knight) ||
+         is_check_single(square, colour, *this, 2, -1, PieceType::Knight) ||
+         is_check_single(square, colour, *this, -2, 1, PieceType::Knight) ||
+         is_check_single(square, colour, *this, -2, -1, PieceType::Knight) ||
+         is_check_single(square, colour, *this, 1, step, PieceType::Pawn) ||
+         is_check_single(square, colour, *this, -1, step, PieceType::Pawn);
 }
 
 int8_t Board::evaluate(Colour colour) {
@@ -235,4 +216,11 @@ int8_t Board::evaluate(Colour colour) {
     }
   }
   return eval;
+}
+
+void Position::get_moves() {
+  if (!this->evaluated) {
+    this->board->get_moves(this->next, opposite(this->move.piece.colour));
+    this->evaluated = true;
+  }
 }

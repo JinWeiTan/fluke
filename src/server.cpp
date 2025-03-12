@@ -19,7 +19,7 @@ void Server::handle_client_connect(Message &message,
   socket_data->game_id = this->game_id;
   this->game_id++;
   if (player.colour == Colour::White) {
-    game.engine.get_moves(1);
+    game.engine.move->get_moves();
     Message message = Message(ServerMove(game.engine.move));
     this->send_message(message, socket_data);
   }
@@ -28,19 +28,16 @@ void Server::handle_client_connect(Message &message,
 void Server::handle_client_move(Message &message, PerSocketData *socket_data) {
   ClientMove data = std::get<ClientMove>(message.data);
   Game &game = this->games[socket_data->game_id];
-  game.engine.move = game.engine.move->next[data.move];
-  game.engine.board->make_move(game.engine.move->move);
+  game.engine.make_move(data.move);
   // game.engine.board->display();
 
-  game.engine.get_moves(3);
   int move = game.engine.search_moves(3);
   if (move == -1) {
     Message server_message = Message(ServerClose());
     return this->send_message(server_message, socket_data);
   }
   game.engine.clean_moves(move);
-  game.engine.move = game.engine.move->next[move];
-  game.engine.board->make_move(game.engine.move->move);
+  game.engine.make_move(move);
   Message server_message = Message(ServerMove(game.engine.move));
   this->send_message(server_message, socket_data);
 }

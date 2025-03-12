@@ -3,6 +3,11 @@
 #include "engine.hpp"
 #include <iostream>
 
+struct BestMove {
+  int eval;
+  int move;
+};
+
 Engine Engine::init() {
   Board *board = new Board{};
   *board = Board::init();
@@ -12,52 +17,30 @@ Engine Engine::init() {
   return Engine{display, move};
 }
 
-void get_moves_inner(int depth, Position *move) {
-  if (depth > 0) {
-    if (move->board != NULL) {
-      move->board->get_moves(move->next, opposite(move->move.piece.colour));
-      delete move->board;
-      move->board = NULL;
-    }
-    for (size_t i = 0; i < move->next.size(); i++) {
-      get_moves_inner(depth - 1, move->next[i]);
-    }
-  }
-}
-
-void Engine::get_moves(int depth) { get_moves_inner(depth, this->move); }
-
-int8_t search_moves_inner(int depth, Position *&move) {
+BestMove search_moves_inner(int depth, Position *move, int alpha, int beta) {
   if (depth == 0) {
-    return move->board->evaluate(move->move.piece.colour);
+    return BestMove{move->board->evaluate(move->move.piece.colour), -1};
   }
-  int8_t max = -120;
-  for (auto &move : move->next) {
-    int score = -search_moves_inner(depth - 1, move);
-    if (score > max) {
-      max = score;
+  move->get_moves();
+  BestMove best = BestMove{-120, -1};
+  for (int i = 0; i < move->next.size(); i++) {
+    int eval = -search_moves_inner(depth - 1, move->next[i], -beta, -alpha).eval;
+    if (eval > best.eval) {
+      best.eval = eval;
+      best.move = i;
     }
-  }
-  return max;
-}
-
-int Engine::search_moves(int depth) {
-  int best = -1;
-  int8_t max = -120;
-  for (int i = 0; i < this->move->next.size(); i++) {
-    Position *move = this->move->next[i];
-    move->board = NULL;
-    int8_t score = -search_moves_inner(depth - 1, move);
-    // if ((move->move.to.x == 3 || move->move.to.x == 4) &&
-    //     (move->move.to.y == 3 || move->move.to.y == 4)) {
-    //   score += 1;
-    // }
-    if (score > max) {
-      max = score;
-      best = i;
+    if (best.eval > alpha) {
+      alpha = best.eval;
+    }
+    if (alpha > beta) {
+      break;
     }
   }
   return best;
+}
+
+int Engine::search_moves(int depth) {
+  return search_moves_inner(depth, this->move, -120, 120).move;
 }
 
 void clean_moves_inner(Position *move) {
@@ -76,4 +59,9 @@ void Engine::clean_moves(int except) {
       clean_moves_inner(this->move->next[i]);
     }
   }
+}
+
+void Engine::make_move(int move) {
+  this->move = this->move->next[move];
+  this->board->make_move(this->move->move);
 }

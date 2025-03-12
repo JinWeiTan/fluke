@@ -7,10 +7,8 @@
 const uint8_t EMPTY = 32;
 
 struct Castling {
-  bool white_kingside;
-  bool black_kingside;
-  bool white_queenside;
-  bool black_queenside;
+  bool white;
+  bool black;
 };
 
 struct Board {
@@ -37,4 +35,6 @@ struct Position {
   Board* board;
   Move move;
   std::vector<Position*> next;
+  bool evaluated;
+  void get_moves();
 };

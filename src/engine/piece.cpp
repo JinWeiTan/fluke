@@ -139,7 +139,7 @@ void get_king_moves(Piece &piece, Board &board,
 
   // Castling
   if (piece.colour == Colour::White) {
-    if (board.castling.black_kingside) {
+    if (board.castling.white) {
       Square square1 = Square{5, 0}, square2 = Square{6, 0};
       if (!board.is_occupied(square1) && !board.is_occupied(square2)) {
         if (!board.is_check_at(square1, Colour::White) &&
@@ -147,10 +147,8 @@ void get_king_moves(Piece &piece, Board &board,
           board.get_move(moves, piece.square, square2, MoveType::Castle);
         }
       }
-    }
-    if (board.castling.white_queenside) {
-      Square square1 = Square{3, 0}, square2 = Square{2, 0},
-             square3 = Square{1, 0};
+      square1 = Square{3, 0}, square2 = Square{2, 0};
+      Square square3 = Square{1, 0};
       if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
           !board.is_occupied(square3)) {
         if (!board.is_check_at(square1, Colour::White) &&
@@ -160,7 +158,7 @@ void get_king_moves(Piece &piece, Board &board,
       }
     }
   } else {
-    if (board.castling.black_kingside) {
+    if (board.castling.black) {
       Square square1 = Square{5, 7}, square2 = Square{6, 7};
       if (!board.is_occupied(square1) && !board.is_occupied(square2)) {
         if (!board.is_check_at(square1, Colour::Black) &&
@@ -168,10 +166,8 @@ void get_king_moves(Piece &piece, Board &board,
           board.get_move(moves, piece.square, square2, MoveType::Castle);
         }
       }
-    }
-    if (board.castling.black_queenside) {
-      Square square1 = Square{3, 7}, square2 = Square{2, 7},
-             square3 = Square{1, 7};
+      square1 = Square{3, 7}, square2 = Square{2, 7};
+      Square square3 = Square{1, 7};
       if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
           !board.is_occupied(square3)) {
         if (!board.is_check_at(square1, Colour::Black) &&

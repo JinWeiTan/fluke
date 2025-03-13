@@ -12,8 +12,8 @@ struct Castling {
 };
 
 struct Board {
-  std::vector<Piece> pieces;
-  std::vector<std::vector<uint8_t>> board;
+  Piece pieces[32];
+  uint8_t board[8][8];
   Castling castling;
   bool last_move_double_step;
   

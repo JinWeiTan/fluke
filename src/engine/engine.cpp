@@ -9,24 +9,23 @@ struct BestMove {
 };
 
 Engine Engine::init() {
-  Board *board = new Board{};
-  *board = Board::init();
-  Position *move = new Position{board, Move{}};
-  Board *display = new Board{};
-  *display = Board::init();
-  return Engine{display, move};
+  Position *move = new Position{Move{}};
+  return Engine{Board::init(), move};
 }
 
-BestMove search_moves_inner(int depth, Position *move, int alpha, int beta) {
+BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
+                            int beta) {
   if (depth == 0) {
-    return BestMove{move->board->evaluate(move->move.piece.colour), -1};
+    return BestMove{board.evaluate(move->move.piece.colour), -1};
   }
-  move->get_moves();
+  board.get_moves(move->next, opposite(move->move.piece.colour));
   BestMove best = BestMove{-120, -1};
   for (int i = 0; i < move->next.size(); i++) {
-    int eval = -search_moves_inner(depth - 1, move->next[i], -beta, -alpha).eval;
-    if (eval > best.eval) {
-      best.eval = eval;
+    Board next = board.make_move(move->next[i]->move);
+    BestMove result =
+        search_moves_inner(depth - 1, move->next[i], next, -beta, -alpha);
+    if (-result.eval > best.eval) {
+      best.eval = -result.eval;
       best.move = i;
     }
     if (best.eval > alpha) {
@@ -40,15 +39,12 @@ BestMove search_moves_inner(int depth, Position *move, int alpha, int beta) {
 }
 
 int Engine::search_moves(int depth) {
-  return search_moves_inner(depth, this->move, -120, 120).move;
+  return search_moves_inner(depth, this->move, this->board, -120, 120).move;
 }
 
 void clean_moves_inner(Position *move) {
   for (int i = 0; i < move->next.size(); i++) {
     clean_moves_inner(move->next[i]);
-  }
-  if (move->board != NULL) {
-    delete move->board;
   }
   delete move;
 }
@@ -63,5 +59,5 @@ void Engine::clean_moves(int except) {
 
 void Engine::make_move(int move) {
   this->move = this->move->next[move];
-  this->board->make_move(this->move->move);
+  this->board = this->board.make_move(this->move->move);
 }

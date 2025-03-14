@@ -3,7 +3,7 @@
 #include "board.hpp"
 
 struct Engine {
-    Board* board;
+    Board board;
     Position* move;
     static Engine init();
     void make_move(int move);

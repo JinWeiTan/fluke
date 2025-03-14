@@ -73,12 +73,10 @@ void get_pawn_moves(Piece &piece, Board &board,
     int len = moves.size();
     for (int i = 0; i < len; i += 1) {
       for (int j = 3; j >= 0; j -= 1) {
-        Board *board = new Board{};
-        *board = *moves[i]->board;
-        Position *move = new Position{board, moves[i]->move};
+        Position *move = new Position{moves[i]->move};
         move->move.type = MoveType::Promotion;
         move->move.piece.type = static_cast<PieceType>(j + 1);
-        move->board->pieces[move->move.piece.id].type = move->move.piece.type;
+        //fix
         promotion.push_back(move);
       }
     }

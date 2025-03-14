@@ -1,7 +1,7 @@
 #include "server.hpp"
+#include <chrono>
 #include <thread>
 #include <variant>
-#include <chrono>
 
 std::chrono::milliseconds get_time() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -25,7 +25,7 @@ void Server::handle_client_connect(Message &message,
   socket_data->game_id = this->game_id;
   this->game_id++;
   if (player.colour == Colour::White) {
-    game.engine.move->get_moves();
+    game.engine.board.get_moves(game.engine.move->next, player.colour);
     Message message = Message(ServerMove(game.engine.move));
     this->send_message(message, socket_data);
   }
@@ -37,7 +37,7 @@ void Server::handle_client_move(Message &message, PerSocketData *socket_data) {
   game.engine.make_move(data.move);
 
   auto timestamp = get_time();
-  int move = game.engine.search_moves(4);
+  int move = game.engine.search_moves(5);
   std::cout << get_time() - timestamp << "\n";
   if (move == -1) {
     Message server_message = Message(ServerClose());

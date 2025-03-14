@@ -4,6 +4,7 @@
 #include <optional>
 #include <vector>
 
+const uint8_t GET_EVAL = 125;
 const uint8_t EMPTY = 32;
 
 struct Castling {
@@ -18,7 +19,7 @@ struct Board {
   bool last_move_double_step;
   
   static Board init();
-  void make_move(Move &move);
+  Board make_move(Move &move);
   void get_moves(std::vector<Position *> &moves, Colour colour);
   void get_move(std::vector<Position*> &moves, Square &from, Square &to,
            MoveType type);
@@ -32,9 +33,6 @@ struct Board {
 };
 
 struct Position {
-  Board* board;
   Move move;
   std::vector<Position*> next;
-  bool evaluated;
-  void get_moves();
 };

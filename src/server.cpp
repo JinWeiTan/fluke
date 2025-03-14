@@ -1,6 +1,12 @@
 #include "server.hpp"
 #include <thread>
 #include <variant>
+#include <chrono>
+
+std::chrono::milliseconds get_time() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::system_clock::now().time_since_epoch());
+}
 
 void Server::handle_message(Message &message, PerSocketData *socket_data) {
   if (holds_alternative<ClientConnect>(message.data)) {
@@ -29,9 +35,10 @@ void Server::handle_client_move(Message &message, PerSocketData *socket_data) {
   ClientMove data = std::get<ClientMove>(message.data);
   Game &game = this->games[socket_data->game_id];
   game.engine.make_move(data.move);
-  // game.engine.board->display();
 
+  auto timestamp = get_time();
   int move = game.engine.search_moves(4);
+  std::cout << get_time() - timestamp << "\n";
   if (move == -1) {
     Message server_message = Message(ServerClose());
     return this->send_message(server_message, socket_data);

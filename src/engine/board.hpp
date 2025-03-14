@@ -28,7 +28,6 @@ struct Board {
   bool in_bounds(Square &square);
   bool is_check_at(Square &square, Colour colour);
   bool is_check(Colour colour);
-  int8_t evaluate(Colour colour);
   void display();
 };
 

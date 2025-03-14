@@ -204,13 +204,3 @@ bool Board::is_check_at(Square &square, Colour colour) {
          is_check_single(square, colour, *this, 1, step, PieceType::Pawn) ||
          is_check_single(square, colour, *this, -1, step, PieceType::Pawn);
 }
-
-int8_t Board::evaluate(Colour colour) {
-  int8_t eval = 0;
-  for (auto &&piece : this->pieces) {
-    if (!piece.taken) {
-      eval += PieceValue[piece.type] * ((piece.colour == colour) ? -1 : 1);
-    }
-  }
-  return eval;
-}

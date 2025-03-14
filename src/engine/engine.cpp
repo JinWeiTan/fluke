@@ -4,11 +4,25 @@
 #include <iostream>
 
 struct BestMove {
-  int eval;
+  Eval eval;
   int move;
 };
 
+Eval WhitePawnWeights[8][8];
+Eval BlackPawnWeights[8][8];
+Eval PieceWeights[8][8];
+Eval KingWeights[8][8];
+
 Engine Engine::init() {
+  for (size_t i = 0; i < 8; i++) {
+    for (size_t j = 0; j < 8; j++) {
+      int value = std::max(std::abs(3.5 - i), std::abs(3.5 - j));
+      WhitePawnWeights[i][j] = i;
+      BlackPawnWeights[i][j] = 7 - i;
+      PieceWeights[i][j] = 3 - value + 3;
+      KingWeights[i][j] = value + 3;
+    }
+  }
   Position *move = new Position{Move{}};
   return Engine{Board::init(), move};
 }
@@ -16,7 +30,7 @@ Engine Engine::init() {
 BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
                             int beta) {
   if (depth == 0) {
-    return BestMove{board.evaluate(move->move.piece.colour), -1};
+    return BestMove{Engine::evaluate(board, move->move.piece.colour), -1};
   }
   board.get_moves(move->next, opposite(move->move.piece.colour));
   BestMove best = BestMove{-120, -1};
@@ -60,4 +74,27 @@ void Engine::clean_moves(int except) {
 void Engine::make_move(int move) {
   this->move = this->move->next[move];
   this->board = this->board.make_move(this->move->move);
+}
+
+Eval Engine::evaluate(Board &board, Colour colour) {
+  Eval eval = 0;
+  for (auto &&piece : board.pieces) {
+    if (!piece.taken) {
+      Eval weights;
+      if (piece.type == PieceType::Pawn) {
+        if (piece.colour == Colour::White) {
+          weights = WhitePawnWeights[piece.square.x][piece.square.y];
+        } else {
+          weights = BlackPawnWeights[piece.square.x][piece.square.y];
+        }
+      } else if (piece.type == PieceType::King) {
+        weights = KingWeights[piece.square.x][piece.square.y];
+      } else {
+        weights = PieceWeights[piece.square.x][piece.square.y];
+      }
+      eval += (PieceValue[piece.type] + weights) *
+              ((piece.colour == colour) ? -1 : 1);
+    }
+  }
+  return eval;
 }

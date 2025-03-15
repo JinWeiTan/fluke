@@ -5,39 +5,38 @@
 #include <type_traits>
 
 Board Board::init() {
-  Board board =
-      Board{{Piece(0, PieceType::Pawn, Colour::White, Square(4, 1)),
-             Piece(1, PieceType::Pawn, Colour::White, Square(3, 1)),
-             Piece(2, PieceType::Pawn, Colour::White, Square(5, 1)),
-             Piece(3, PieceType::Pawn, Colour::White, Square(2, 1)),
-             Piece(4, PieceType::Pawn, Colour::White, Square(6, 1)),
-             Piece(5, PieceType::Pawn, Colour::White, Square(1, 1)),
-             Piece(6, PieceType::Pawn, Colour::White, Square(7, 1)),
-             Piece(7, PieceType::Pawn, Colour::White, Square(0, 1)),
-             Piece(8, PieceType::Rook, Colour::White, Square(0, 0)),
-             Piece(9, PieceType::Knight, Colour::White, Square(1, 0)),
-             Piece(10, PieceType::Bishop, Colour::White, Square(2, 0)),
-             Piece(11, PieceType::Queen, Colour::White, Square(3, 0)),
-             Piece(12, PieceType::King, Colour::White, Square(4, 0)),
-             Piece(13, PieceType::Bishop, Colour::White, Square(5, 0)),
-             Piece(14, PieceType::Knight, Colour::White, Square(6, 0)),
-             Piece(15, PieceType::Rook, Colour::White, Square(7, 0)),
-             Piece(16, PieceType::Pawn, Colour::Black, Square(4, 6)),
-             Piece(17, PieceType::Pawn, Colour::Black, Square(3, 6)),
-             Piece(18, PieceType::Pawn, Colour::Black, Square(5, 6)),
-             Piece(19, PieceType::Pawn, Colour::Black, Square(2, 6)),
-             Piece(20, PieceType::Pawn, Colour::Black, Square(6, 6)),
-             Piece(21, PieceType::Pawn, Colour::Black, Square(1, 6)),
-             Piece(22, PieceType::Pawn, Colour::Black, Square(7, 6)),
-             Piece(23, PieceType::Pawn, Colour::Black, Square(0, 6)),
-             Piece(24, PieceType::Rook, Colour::Black, Square(0, 7)),
-             Piece(25, PieceType::Knight, Colour::Black, Square(1, 7)),
-             Piece(26, PieceType::Bishop, Colour::Black, Square(2, 7)),
-             Piece(27, PieceType::Queen, Colour::Black, Square(3, 7)),
-             Piece(28, PieceType::King, Colour::Black, Square(4, 7)),
-             Piece(29, PieceType::Bishop, Colour::Black, Square(5, 7)),
-             Piece(30, PieceType::Knight, Colour::Black, Square(6, 7)),
-             Piece(31, PieceType::Rook, Colour::Black, Square(7, 7))}};
+  Board board = Board{Piece{0, PieceType::Pawn, Colour::White, Square{4, 1}},
+                      Piece{1, PieceType::Pawn, Colour::White, Square{3, 1}},
+                      Piece{2, PieceType::Pawn, Colour::White, Square{5, 1}},
+                      Piece{3, PieceType::Pawn, Colour::White, Square{2, 1}},
+                      Piece{4, PieceType::Pawn, Colour::White, Square{6, 1}},
+                      Piece{5, PieceType::Pawn, Colour::White, Square{1, 1}},
+                      Piece{6, PieceType::Pawn, Colour::White, Square{7, 1}},
+                      Piece{7, PieceType::Pawn, Colour::White, Square{0, 1}},
+                      Piece{8, PieceType::Rook, Colour::White, Square{0, 0}},
+                      Piece{9, PieceType::Knight, Colour::White, Square{1, 0}},
+                      Piece{10, PieceType::Bishop, Colour::White, Square{2, 0}},
+                      Piece{11, PieceType::Queen, Colour::White, Square{3, 0}},
+                      Piece{12, PieceType::King, Colour::White, Square{4, 0}},
+                      Piece{13, PieceType::Bishop, Colour::White, Square{5, 0}},
+                      Piece{14, PieceType::Knight, Colour::White, Square{6, 0}},
+                      Piece{15, PieceType::Rook, Colour::White, Square{7, 0}},
+                      Piece{16, PieceType::Pawn, Colour::Black, Square{4, 6}},
+                      Piece{17, PieceType::Pawn, Colour::Black, Square{3, 6}},
+                      Piece{18, PieceType::Pawn, Colour::Black, Square{5, 6}},
+                      Piece{19, PieceType::Pawn, Colour::Black, Square{2, 6}},
+                      Piece{20, PieceType::Pawn, Colour::Black, Square{6, 6}},
+                      Piece{21, PieceType::Pawn, Colour::Black, Square{1, 6}},
+                      Piece{22, PieceType::Pawn, Colour::Black, Square{7, 6}},
+                      Piece{23, PieceType::Pawn, Colour::Black, Square{0, 6}},
+                      Piece{24, PieceType::Rook, Colour::Black, Square{0, 7}},
+                      Piece{25, PieceType::Knight, Colour::Black, Square{1, 7}},
+                      Piece{26, PieceType::Bishop, Colour::Black, Square{2, 7}},
+                      Piece{27, PieceType::Queen, Colour::Black, Square{3, 7}},
+                      Piece{28, PieceType::King, Colour::Black, Square{4, 7}},
+                      Piece{29, PieceType::Bishop, Colour::Black, Square{5, 7}},
+                      Piece{30, PieceType::Knight, Colour::Black, Square{6, 7}},
+                      Piece{31, PieceType::Rook, Colour::Black, Square{7, 7}}};
   for (size_t i = 0; i < 8; i++) {
     for (size_t j = 0; j < 8; j++) {
       board.board[i][j] = EMPTY;
@@ -86,7 +85,7 @@ Board Board::make_move(Move &move) {
     board.pieces[board.board[move.to.x][move.from.y]].taken = true;
   } else if (move.type == MoveType::DoubleStep) {
     board.double_step = move.to.x;
-  } 
+  }
 
   if (move.piece == PieceType::Rook) {
     if (move.colour == Colour::White) {
@@ -154,9 +153,9 @@ void Board::display() {
   printf("\n");
 }
 
-bool is_check_inner(Square &from, Colour colour, Board &board, int a, int b,
+bool is_check_inner(Square &from, Colour colour, Board &board, uint8_t a, uint8_t b,
                     PieceType expect) {
-  Square square(from.x + a, from.y + b);
+  Square square{from.x + a, from.y + b};
   while (board.in_bounds(square)) {
     if (board.is_occupied(square)) {
       Piece &target = board.pieces[board.board[square.x][square.y]];
@@ -171,9 +170,9 @@ bool is_check_inner(Square &from, Colour colour, Board &board, int a, int b,
   return false;
 };
 
-bool is_check_single(Square &from, Colour colour, Board &board, int a, int b,
+bool is_check_single(Square &from, Colour colour, Board &board, uint8_t a, uint8_t b,
                      PieceType expect) {
-  Square square(from.x + a, from.y + b);
+  Square square{from.x + a, from.y + b};
   if (board.in_bounds(square) && board.is_occupied(square)) {
     Piece &target = board.pieces[board.board[square.x][square.y]];
     if ((target.colour != colour) && (target.type == expect)) {

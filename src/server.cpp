@@ -31,18 +31,18 @@ bool search_moves(Game &game) {
 void Server::handle_client_connect(Message &message,
                                    PerSocketData *socket_data) {
   ClientConnect data = std::get<ClientConnect>(message.data);
-  Player player(socket_data->client_id, data.colour);
+  Player player{socket_data->client_id, data.colour};
   this->games[this->game_id] = Game{this->game_id, player, Engine::init()};
   Game &game = this->games[this->game_id];
   socket_data->game_id = this->game_id;
   this->game_id++;
   if (player.colour == Colour::White) {
     game.engine.board.get_moves(game.engine.move->next, player.colour);
-    Message message = Message(ServerMove(game.engine.move));
+    Message message = Message{ServerMove{game.engine.move}};
     this->send_message(message, socket_data);
   } else {
     search_moves(game);
-    Message server_message = Message(ServerMove(game.engine.move));
+    Message server_message = Message{ServerMove{game.engine.move}};
     this->send_message(server_message, socket_data);
   }
 }
@@ -54,10 +54,10 @@ void Server::handle_client_move(Message &message, PerSocketData *socket_data) {
 
   bool has_moves = search_moves(game);
   if (!has_moves) {
-    Message server_message = Message(ServerClose());
+    Message server_message = Message{ServerClose{}};
     return this->send_message(server_message, socket_data);
   }
-  Message server_message = Message(ServerMove(game.engine.move));
+  Message server_message = Message{ServerMove{game.engine.move}};
   this->send_message(server_message, socket_data);
 }
 

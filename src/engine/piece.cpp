@@ -5,8 +5,8 @@
 #include <string>
 
 void get_move_inner(Piece &piece, Board &board, std::vector<Position *> &moves,
-                    int a, int b) {
-  Square square(piece.square.x + a, piece.square.y + b);
+                    uint8_t a, uint8_t b) {
+  Square square{piece.square.x + a, piece.square.y + b};
   while (board.in_bounds(square) && !board.is_occupied(square, piece.colour)) {
     board.get_move(moves, piece.square, square, MoveType::Step);
     if (board.is_occupied(square, opposite(piece.colour))) {
@@ -17,8 +17,8 @@ void get_move_inner(Piece &piece, Board &board, std::vector<Position *> &moves,
 };
 
 void get_move_inner_single(Piece &piece, Board &board,
-                           std::vector<Position *> &moves, int a, int b) {
-  Square square(piece.square.x + a, piece.square.y + b);
+                           std::vector<Position *> &moves, uint8_t a, uint8_t b) {
+  Square square{piece.square.x + a, piece.square.y + b};
   if (board.in_bounds(square) && !board.is_occupied(square, piece.colour)) {
     board.get_move(moves, piece.square, square, MoveType::Step);
   }
@@ -40,9 +40,9 @@ void get_promotion_moves(Piece &piece, std::vector<Position *> &moves) {
 
 void get_pawn_moves(Piece &piece, Board &board,
                     std::vector<Position *> &moves) {
-  int step = piece.colour == Colour::White ? 1 : -1;
+  uint8_t step = piece.colour == Colour::White ? 1 : -1;
   // Diagonal pawn capture
-  Square square(piece.square.x + 1, piece.square.y + step);
+  Square square{piece.square.x + 1, piece.square.y + step};
   if (board.in_bounds(square) &&
       board.is_occupied(square, opposite(piece.colour))) {
     bool is_check = board.get_move(moves, piece.square, square, MoveType::Step);
@@ -50,10 +50,10 @@ void get_pawn_moves(Piece &piece, Board &board,
       get_promotion_moves(piece, moves);
     }
   }
-  square = Square(piece.square.x - 1, piece.square.y + step);
-  if (board.in_bounds(square) &&
-      board.is_occupied(square, opposite(piece.colour))) {
-    bool is_check = board.get_move(moves, piece.square, square, MoveType::Step);
+  Square square2{piece.square.x - 1, piece.square.y + step};
+  if (board.in_bounds(square2) &&
+      board.is_occupied(square2, opposite(piece.colour))) {
+    bool is_check = board.get_move(moves, piece.square, square2, MoveType::Step);
     if (!is_check) {
       get_promotion_moves(piece, moves);
     }
@@ -61,8 +61,8 @@ void get_pawn_moves(Piece &piece, Board &board,
 
   // Double pawn move
   if (piece.square.y == (piece.colour == Colour::White ? 1 : 6)) {
-    Square square1(piece.square.x, piece.colour == Colour::White ? 3 : 4);
-    Square square2(piece.square.x, piece.colour == Colour::White ? 2 : 5);
+    Square square1{piece.square.x, piece.colour == Colour::White ? 3 : 4};
+    Square square2{piece.square.x, piece.colour == Colour::White ? 2 : 5};
     if (board.in_bounds(square1) && !board.is_occupied(square1) &&
         !board.is_occupied(square2)) {
       board.get_move(moves, piece.square, square1, MoveType::DoubleStep);
@@ -70,9 +70,9 @@ void get_pawn_moves(Piece &piece, Board &board,
   }
 
   // Single pawn move
-  square = Square(piece.square.x, piece.square.y + step);
-  if (board.in_bounds(square) && !board.is_occupied(square)) {
-    bool is_check = board.get_move(moves, piece.square, square, MoveType::Step);
+  Square square3{piece.square.x, piece.square.y + step};
+  if (board.in_bounds(square3) && !board.is_occupied(square3)) {
+    bool is_check = board.get_move(moves, piece.square, square3, MoveType::Step);
     if (!is_check) {
       get_promotion_moves(piece, moves);
     }
@@ -81,11 +81,11 @@ void get_pawn_moves(Piece &piece, Board &board,
   // En passant
   if (piece.square.y == (piece.colour == Colour::White ? 4 : 3)) {
     if (board.double_step == piece.square.x + 1) {
-      square = Square(piece.square.x + 1, piece.square.y + step);
+      Square square{piece.square.x + 1, piece.square.y + step};
       board.get_move(moves, piece.square, square, MoveType::EnPassant);
     }
     if (board.double_step == piece.square.x - 1) {
-      square = Square(piece.square.x - 1, piece.square.y + step);
+      Square square{piece.square.x - 1, piece.square.y + step};
       board.get_move(moves, piece.square, square, MoveType::EnPassant);
     }
   }

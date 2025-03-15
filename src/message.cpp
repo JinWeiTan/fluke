@@ -23,11 +23,11 @@ Message Message::decode(std::string_view buffer) {
 }
 
 Message ClientConnect::decode(std::string_view buffer) {
-  return Message(ClientConnect((Colour)buffer[1]));
+  return Message{ClientConnect{(Colour)buffer[1]}};
 }
 
 Message ClientMove::decode(std::string_view buffer) {
-  return Message(ClientMove((uint8_t)buffer[1]));
+  return Message{ClientMove{(uint8_t)buffer[1]}};
 }
 
 std::string ServerClose::encode() {

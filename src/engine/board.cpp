@@ -47,52 +47,55 @@ Board Board::init() {
     board.board[piece.square.x][piece.square.y] = piece.id;
   }
   board.castling = Castling{true, true};
+  board.double_step = 9;
   return board;
+}
+
+void move_piece(Board &board, Square from, Square to) {
+  Piece &piece = board.pieces[board.board[from.x][from.y]];
+  piece.square = to;
+  board.board[to.x][to.y] = board.board[from.x][from.y];
+  board.board[from.x][from.y] = EMPTY;
 }
 
 Board Board::make_move(Move &move) {
   Board board = *this;
   Piece &piece = board.pieces[board.board[move.from.x][move.from.y]];
-  piece.square = move.to;
-  piece.type = move.piece.type;
+  piece.type = move.piece;
   if (board.board[move.to.x][move.to.y] != EMPTY) {
     board.pieces[board.board[move.to.x][move.to.y]].taken = true;
   }
-  board.board[move.to.x][move.to.y] = board.board[move.from.x][move.from.y];
-  board.board[move.from.x][move.from.y] = EMPTY;
+  move_piece(board, move.from, move.to);
 
+  board.double_step = 9;
   if (move.type == MoveType::Castle) {
     if (piece.colour == Colour::White) {
       if (move.to.x == 2) {
-        board.pieces[8].square.x = 3;
-        board.board[3][0] = 8;
-        board.board[0][0] = EMPTY;
+        move_piece(board, Square{0, 0}, Square{3, 0});
       } else {
-        board.pieces[15].square.x = 5;
-        board.board[5][0] = 15;
-        board.board[7][0] = EMPTY;
+        move_piece(board, Square{7, 0}, Square{5, 0});
       }
     } else {
       if (move.to.x == 2) {
-        board.pieces[24].square.x = 3;
-        board.board[3][7] = 24;
-        board.board[0][7] = EMPTY;
+        move_piece(board, Square{0, 7}, Square{3, 7});
       } else {
-        board.pieces[31].square.x = 5;
-        board.board[5][7] = 31;
-        board.board[7][7] = EMPTY;
+        move_piece(board, Square{7, 7}, Square{5, 7});
       }
     }
-  }
-  if (move.piece.type == PieceType::Rook) {
-    if (move.piece.colour == Colour::White) {
+  } else if (move.type == MoveType::EnPassant) {
+    board.pieces[board.board[move.to.x][move.from.y]].taken = true;
+  } else if (move.type == MoveType::DoubleStep) {
+    board.double_step = move.to.x;
+  } 
+
+  if (move.piece == PieceType::Rook) {
+    if (move.colour == Colour::White) {
       board.castling.white = false;
     } else {
       board.castling.black = false;
     }
-  }
-  if (move.piece.type == PieceType::King) {
-    if (move.piece.colour == Colour::White) {
+  } else if (move.piece == PieceType::King) {
+    if (move.colour == Colour::White) {
       board.castling.white = false;
     } else {
       board.castling.black = false;
@@ -111,14 +114,16 @@ void Board::get_moves(std::vector<Position *> &moves, Colour colour) {
   }
 }
 
-void Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
+bool Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
                      MoveType type) {
   Piece &piece = this->pieces[this->board[from.x][from.y]];
-  Move move = Move{piece, std::nullopt, from, to, type};
+  Move move = Move{piece.id, piece.type, piece.colour, from, to, type};
   Board board = this->make_move(move);
-  if (!board.is_check(piece.colour)) {
+  bool is_check = board.is_check(piece.colour);
+  if (!is_check) {
     moves.push_back(new Position{move});
   }
+  return is_check;
 }
 
 bool Board::is_occupied(Square &square) {

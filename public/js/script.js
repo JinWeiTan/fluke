@@ -2,6 +2,9 @@ const canvas = document.getElementsByTagName("canvas")[0]
 const modal = document.getElementsByClassName("modal")
 const pieces = document.getElementsByClassName("piece")
 const result = document.getElementsByClassName("result")[0]
+const start = document.getElementsByClassName("start")[0]
+const colours = document.getElementsByClassName("colour")
+const info = document.getElementsByClassName("info")[0]
 const ctx = canvas.getContext("2d")
 const game = {
     socket: new WebSocket("ws://localhost:3000/"),
@@ -13,6 +16,7 @@ const game = {
     move: {},
     state: 'none',
     turn: 'white',
+    colour: 'white',
 }
 
 function render() {
@@ -23,25 +27,29 @@ function render() {
     game.pieces[12].check = isCheck("white")
     game.pieces[28].check = isCheck("black")
 
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
+    for (let i = 0; i < 8; i+=1) {
+        for (let j = 0; j < 8; j+=1) {
             const moves = [...game.pieceMoves, game.piece]
             const isMove = moves.find(move => move.square.x == i && move.square.y == j)
             const piece = game.pieces.find(piece => piece.square.x == i && piece.square.y == j)
             const isCheck = piece ? piece.check : false
             ctx.fillStyle = isCheck ? "red" : isMove ? "lime" : "black"
-            if ((i + j) % 2 != 0 || isMove || isCheck) {
-                ctx.fillRect(squareWidth * i, squareWidth * (7 - j), squareWidth, squareWidth)
+            if (((i + j) % 2 != 0) || isMove || isCheck) {
+                const x = game.colour == "white" ? i : (7 - i);
+                const y = game.colour == "white" ? (7 -j) : j;
+                ctx.fillRect(squareWidth * x, squareWidth * y, squareWidth, squareWidth)
             }
         }
     }
 
     for (const piece of game.pieces) {
         if (piece.alive) {
+            const x = game.colour == "white" ? piece.square.x : (7 - piece.square.x);
+            const y = game.colour == "white" ? (7 - piece.square.y) : piece.square.y;
             ctx.drawImage(
                 game.assets[piece.img],
-                piece.square.x * squareWidth,
-                (7 - piece.square.y) * squareWidth,
+                x * squareWidth,
+                y * squareWidth,
                 squareWidth,
                 squareWidth
             )
@@ -131,34 +139,40 @@ function update(move) {
             }
         }
     }
-    if (move.promote) {
-        game.piece.img = game.turn + new URL(pieces[move.promote - 1].src).pathname.slice(13, -4)
+    if (move.type >= 4) {
+        game.piece.img = game.turn + new URL(pieces[move.type - 4].src).pathname.slice(13, -4)
     }
     game.piece.square = move.square
     game.turn = game.turn == "white" ? "black" : "white"
     game.pieceMoves = []
     game.piece = { square: {} }
     game.move = {}
+    info.innerHTML = ((game.turn == "white" ? "White" : "Black") + "'s turn")
+    if (game.turn != game.colour) {
+        info.innerHTML += "<br>Calculating..."
+    }
 }
 
 function onclick(e) {
     const squareWidth = canvas.height / 8
     const offsetX = canvas.getBoundingClientRect().left
     const offsetY = canvas.getBoundingClientRect().top
-    const squareX = Math.floor((e.clientX - offsetX) / squareWidth)
-    const squareY = 7 - Math.floor((e.clientY - offsetY) / squareWidth)
+    const clickX = Math.floor((e.clientX - offsetX) / squareWidth)
+    const clickY = Math.floor((e.clientY - offsetY) / squareWidth)
+    const squareX = game.colour == "white" ? clickX : (7 - clickX)
+    const squareY = game.colour == "white" ? (7 - clickY) : clickY
 
     for (const move of game.pieceMoves) {
         if (move.square.x == squareX && move.square.y == squareY && move.id == game.piece.id) {
-            if (move.type == 4) {
+            if (move.type >= 4) {
                 const moves = game.pieceMoves.filter(move =>
-                    move.type == 4 && move.square.x == squareX
+                    move.type >= 4 && move.square.x == squareX
                     && move.square.y == squareY)
                 for (let i = 0; i < 4; i++) {
                     pieces[i].dataset.move = moves[3 - i].index
                 }
                 modal[0].style.display = "block"
-                return game.move = move
+                return
             } else {
                 game.socket.send(new Uint8Array([1, move.index]))
                 update(move)
@@ -191,7 +205,6 @@ async function onmessage(message) {
         result.style.display = "block";
         game.socket.close()
     }
-    let move;
     const isFirst = game.moves.length == 0
     game.moves = []
     if (buffer[0] == 2) {
@@ -203,11 +216,8 @@ async function onmessage(message) {
                 square: { x: buffer[i * 4 + 3], y: buffer[i * 4 + 4] },
             })
         }
-        move = game.moves.shift();
-        if (move.type == 4) {
-            move.promote = buffer[buffer.length - 1]
-        }
-        if (!isFirst) {
+        const move = game.moves.shift();
+        if (!isFirst || game.colour == "black") {
             game.piece = game.pieces[move.id]
             update(move)
             render()
@@ -225,14 +235,9 @@ async function onmessage(message) {
     render()
 }
 
-function onopen() {
-    game.socket.send(new Uint8Array([0, 1]))
-}
-
 function onpromote(move) {
     game.socket.send(new Uint8Array([1, move.dataset.move]))
-    const piece = game.pieces.find(piece => piece.id == game.move.id)
-    piece.img = new URL(move.src).pathname.slice(8, -4)
+    game.move = game.moves[move.dataset.move]
     update(game.move)
     render()
     modal[0].style.display = "none"
@@ -301,10 +306,24 @@ function inBounds(square) {
     return square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7;
 }
 
+function onstart(elem) {
+    const colour = new URL(elem.src).pathname.slice(8, 13)
+    start.style.display = "none"
+    game.colour = colour
+    game.socket.send(new Uint8Array([0, colour == "black" ? 0 : 1]))
+    render()
+    info.innerHTML = ((game.turn == "white" ? "White" : "Black") + "'s turn")
+    if (game.turn != game.colour) {
+        info.innerHTML += "<br>Calculating..."
+    }
+}
+
+for (const colour in colours) {
+    colours[colour].onclick = () => onstart(colours[colour])
+}
 
 setup()
 window.onresize = () => render()
 canvas.onclick = onclick
 window.onclick = () => render()
-game.socket.onopen = onopen
 game.socket.onmessage = onmessage

@@ -16,12 +16,12 @@ struct Board {
   Piece pieces[32];
   uint8_t board[8][8];
   Castling castling;
-  bool last_move_double_step;
+  uint8_t double_step;
   
   static Board init();
   Board make_move(Move &move);
   void get_moves(std::vector<Position *> &moves, Colour colour);
-  void get_move(std::vector<Position*> &moves, Square &from, Square &to,
+  bool get_move(std::vector<Position*> &moves, Square &from, Square &to,
            MoveType type);
   bool is_occupied(Square &square);
   bool is_occupied(Square &square, Colour colour);
@@ -34,4 +34,5 @@ struct Board {
 struct Position {
   Move move;
   std::vector<Position*> next;
+  bool generated;
 };

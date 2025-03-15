@@ -39,19 +39,16 @@ std::string ServerClose::encode() {
 std::string ServerMove::encode() {
   std::string buffer = "";
   buffer.push_back(MessageType::ServerMoveType);
-  buffer.push_back(this->move->move.piece.id);
+  buffer.push_back(this->move->move.piece_id);
   buffer.push_back(this->move->move.type);
   buffer.push_back(this->move->move.to.x);
   buffer.push_back(this->move->move.to.y);
 
   for (auto &&move : this->move->next) {
-    buffer.push_back(move->move.piece.id);
+    buffer.push_back(move->move.piece_id);
     buffer.push_back(move->move.type);
     buffer.push_back(move->move.to.x);
     buffer.push_back(move->move.to.y);
-  }
-  if (this->move->move.type == MoveType::Promotion) {
-    buffer.push_back(this->move->move.piece.type);
   }
 
   return buffer;

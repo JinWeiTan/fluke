@@ -19,7 +19,10 @@ add_executable(AnchovyServer
     src/engine/engine.cpp
 )
 
-target_include_directories(AnchovyServer PRIVATE "${CMAKE_CURRENT_SOURCE}vcpkg_installed/x64-windows/include")
+
+if (WIN32)
+
+target_include_directories(AnchovyServer PRIVATE vcpkg_installed/x64-windows/include)
 
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -30,3 +33,17 @@ target_link_libraries(AnchovyServer
     OpenSSL::Crypto
     ZLIB::ZLIB
 )
+
+endif (WIN32)
+
+
+if (UNIX)
+
+set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
+
+target_include_directories(AnchovyServer PRIVATE vcpkg_installed/x64-linux/include)
+target_link_directories(AnchovyServer PRIVATE vcpkg_installed/x64-linux/lib)
+target_link_libraries(AnchovyServer PRIVATE uSockets z)
+
+endif (UNIX)

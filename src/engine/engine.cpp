@@ -30,10 +30,14 @@ Engine Engine::init() {
 BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
                             int beta) {
   if (depth == 0) {
-    return BestMove{Engine::evaluate(board, move->move.piece.colour), -1};
+    return BestMove{Engine::evaluate(board, move->move.colour), -1};
   }
-  board.get_moves(move->next, opposite(move->move.piece.colour));
-  BestMove best = BestMove{-120, -1};
+  board.get_moves(move->next, opposite(move->move.colour));
+  if (move->next.size() == 0) {
+    return BestMove{-2000, -1};
+  }
+
+  BestMove best = BestMove{EvalMin, -1};
   for (int i = 0; i < move->next.size(); i++) {
     Board next = board.make_move(move->next[i]->move);
     BestMove result =
@@ -53,7 +57,8 @@ BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
 }
 
 int Engine::search_moves(int depth) {
-  return search_moves_inner(depth, this->move, this->board, -120, 120).move;
+  return search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax)
+      .move;
 }
 
 void clean_moves_inner(Position *move) {

@@ -15,7 +15,7 @@ const std::string PieceName[6] = {"", "N", "B", "R", "Q", "K"};
 const std::string FileName[8] = {"a", "b", "c", "d", "e", "f", "g", "h"};
 const std::string RankName[8] = {"1", "2", "3", "4", "5", "6", "7", "8"};
 
-enum MoveType { Step, DoubleStep, EnPassant, Castle, Promotion };
+enum MoveType { Step, DoubleStep, EnPassant, Castle, PromoteKnight, PromoteBishop, PromoteRook, PromoteQueen };
 
 struct Square {
   uint8_t x, y;
@@ -39,7 +39,9 @@ struct Piece {
 };
 
 struct Move {
-  Piece piece;
+  uint8_t piece_id;
+  PieceType piece;
+  Colour colour;
   Square from, to;
   MoveType type;
   std::string get_name();

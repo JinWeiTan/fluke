@@ -5,9 +5,10 @@ const result = document.getElementsByClassName("result")[0]
 const start = document.getElementsByClassName("start")[0]
 const colours = document.getElementsByClassName("colour")
 const info = document.getElementsByClassName("info")[0]
+const url = window.location.hostname == "localhost" ? "ws://localhost:3000/" : "https://b192968d-a10e-4518-b464-05a4f0e24ef6-00-3pefct66kv4k5.spock.replit.dev/"
 const ctx = canvas.getContext("2d")
 const game = {
-    socket: new WebSocket("ws://localhost:3000/"),
+    socket: new WebSocket(url),
     assets: {},
     pieces: [],
     piece: { square: {} },

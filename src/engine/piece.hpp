@@ -2,20 +2,29 @@
 
 #include <cstdint>
 #include <optional>
-#include <vector>
 #include <string>
+#include <vector>
 
-enum Colour { Black, White };
+enum Colour : uint8_t { Black, White };
 
 inline Colour opposite(Colour colour) { return static_cast<Colour>(!colour); };
 
-enum PieceType { Pawn, Knight, Bishop, Rook, Queen, King };
+enum PieceType : uint8_t { Pawn, Knight, Bishop, Rook, Queen, King };
 
 const std::string PieceName[6] = {"", "N", "B", "R", "Q", "K"};
 const std::string FileName[8] = {"a", "b", "c", "d", "e", "f", "g", "h"};
 const std::string RankName[8] = {"1", "2", "3", "4", "5", "6", "7", "8"};
 
-enum MoveType { Step, DoubleStep, EnPassant, Castle, PromoteKnight, PromoteBishop, PromoteRook, PromoteQueen };
+enum MoveType : uint8_t {
+  Step,
+  DoubleStep,
+  EnPassant,
+  Castle,
+  PromoteKnight,
+  PromoteBishop,
+  PromoteRook,
+  PromoteQueen
+};
 
 struct Square {
   uint8_t x, y;
@@ -25,7 +34,7 @@ struct Square {
   };
 };
 
-struct Move;
+struct Attacks;
 struct Board;
 struct Position;
 
@@ -35,7 +44,9 @@ struct Piece {
   Colour colour;
   Square square;
   bool taken;
-  void get_moves(Board &board, std::vector<Position *> &moves);
+  void get_moves(Board &board, std::vector<Position *> &moves,
+                 Attacks &attacks);
+  void get_attacks(Board &board, Attacks &attacks);
 };
 
 struct Move {

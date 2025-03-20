@@ -17,6 +17,8 @@ add_executable(AnchovyServer
     src/engine/board.cpp
     src/engine/engine.hpp
     src/engine/engine.cpp
+    src/engine/attack.hpp
+    src/engine/attack.cpp
 )
 
 

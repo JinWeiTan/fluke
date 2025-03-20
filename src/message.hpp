@@ -6,7 +6,7 @@
 #include <variant>
 #include <vector>
 
-enum MessageType {
+enum MessageType: uint8_t {
   ClientConnectType,
   ClientMoveType,
   ServerMoveType,

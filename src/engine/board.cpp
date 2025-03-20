@@ -45,7 +45,7 @@ Board Board::init() {
   for (auto &piece : board.pieces) {
     board.board[piece.square.x][piece.square.y] = piece.id;
   }
-  board.castling = Castling{true, true};
+  board.castling = Castling{true, true, true, true};
   board.double_step = 9;
   return board;
 }
@@ -89,40 +89,63 @@ Board Board::make_move(Move &move) {
 
   if (move.piece == PieceType::Rook) {
     if (move.colour == Colour::White) {
-      board.castling.white = false;
+      if (piece.id == 8) {
+        board.castling.white_queenside = false;
+      } else {
+        board.castling.white_kingside = false;
+      }
     } else {
-      board.castling.black = false;
+      if (piece.id == 24) {
+        board.castling.black_queenside = false;
+      } else {
+        board.castling.black_kingside = false;
+      }
     }
   } else if (move.piece == PieceType::King) {
     if (move.colour == Colour::White) {
-      board.castling.white = false;
+      board.castling.white_kingside = false;
+      board.castling.white_queenside = false;
     } else {
-      board.castling.black = false;
+      board.castling.black_kingside = false;
+      board.castling.black_queenside = false;
     }
   }
   return board;
 }
 
 void Board::get_moves(std::vector<Position *> &moves, Colour colour) {
-  moves = {};
+  Attacks attacks = Attacks{};
+  for (size_t i = 0; i < 16; i++) {
+    int index = i + (colour == Colour::White ? 16 : 0);
+    if (!this->pieces[index].taken) {
+      this->pieces[index].get_attacks(*this, attacks);
+    }
+  }
   for (size_t i = 0; i < 16; i++) {
     int index = i + (colour == Colour::White ? 0 : 16);
     if (!this->pieces[index].taken) {
-      this->pieces[index].get_moves(*this, moves);
+      this->pieces[index].get_moves(*this, moves, attacks);
     }
   }
 }
 
 bool Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
-                     MoveType type) {
+                     MoveType type, Attacks &attacks) {
   Piece &piece = this->pieces[this->board[from.x][from.y]];
   Move move = Move{piece.id, piece.type, piece.colour, from, to, type};
-  Board board = this->make_move(move);
-  bool is_check = board.is_check(piece.colour);
-  if (!is_check) {
+  bool is_legal = true;
+  if (move.type == MoveType::EnPassant) {
+    Board board = this->make_move(move);
+    is_legal = !board.is_check(piece.colour);
+  } else if (piece.type == PieceType::King) {
+    is_legal = !attacks.attacks[to.x][to.y];
+  } else if (attacks.check) {
+    is_legal = attacks.checks[to.x][to.y];
+  }
+  if (is_legal) {
     moves.push_back(new Position{move});
   }
-  return is_check;
+  return is_legal;
 }
 
 bool Board::is_occupied(Square &square) {
@@ -153,8 +176,8 @@ void Board::display() {
   printf("\n");
 }
 
-bool is_check_inner(Square &from, Colour colour, Board &board, uint8_t a, uint8_t b,
-                    PieceType expect) {
+bool is_check_inner(Square &from, Colour colour, Board &board, uint8_t a,
+                    uint8_t b, PieceType expect) {
   Square square{from.x + a, from.y + b};
   while (board.in_bounds(square)) {
     if (board.is_occupied(square)) {
@@ -170,8 +193,8 @@ bool is_check_inner(Square &from, Colour colour, Board &board, uint8_t a, uint8_
   return false;
 };
 
-bool is_check_single(Square &from, Colour colour, Board &board, uint8_t a, uint8_t b,
-                     PieceType expect) {
+bool is_check_single(Square &from, Colour colour, Board &board, uint8_t a,
+                     uint8_t b, PieceType expect) {
   Square square{from.x + a, from.y + b};
   if (board.in_bounds(square) && board.is_occupied(square)) {
     Piece &target = board.pieces[board.board[square.x][square.y]];
@@ -183,11 +206,7 @@ bool is_check_single(Square &from, Colour colour, Board &board, uint8_t a, uint8
 };
 
 bool Board::is_check(Colour colour) {
-  Piece &piece = this->pieces[colour == Colour::White ? 12 : 28];
-  return this->is_check_at(piece.square, colour);
-}
-
-bool Board::is_check_at(Square &square, Colour colour) {
+  Square &square = this->pieces[colour == Colour::White ? 12 : 28].square;
   int step = colour == Colour::White ? 1 : -1;
   return is_check_inner(square, colour, *this, 1, 1, PieceType::Bishop) ||
          is_check_inner(square, colour, *this, -1, 1, PieceType::Bishop) ||

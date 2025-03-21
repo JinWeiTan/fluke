@@ -17,9 +17,9 @@ void Server::handle_message(Message &message, PerSocketData *socket_data) {
 }
 
 bool search_moves(Game &game) {
-  auto timestamp = get_time();
+  // auto timestamp = get_time();
   int move = game.engine.search_moves(5);
-  std::cout << get_time() - timestamp << "\n";
+  // std::cout << get_time() - timestamp << "\n";
   if (move == -1) {
     return false;
   }

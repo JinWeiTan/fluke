@@ -16,9 +16,16 @@ void get_attack_inner(Piece &piece, Board &board, Attacks &attacks, uint8_t a,
         if (current.type == PieceType::King) {
           Square origin = piece.square;
           attacks.check = true;
-          while (board.in_bounds(origin)) {
+          while (!(origin == square)) {
             attacks.checks[origin.x][origin.y] = true;
             origin.x += a, origin.y += b;
+          }
+          while (board.in_bounds(square)) {
+            attacks.attacks[square.x][square.y] = true;
+            square.x += a, square.y += b;
+            if (board.is_occupied(square)) {
+              break;
+            }
           }
         } else {
           PinType &pinned = attacks.pins[board.board[square.x][square.y]];
@@ -33,11 +40,9 @@ void get_attack_inner(Piece &piece, Board &board, Attacks &attacks, uint8_t a,
               break;
             }
           }
-          break;
         }
-      } else {
-        break;
       }
+      break;
     }
     square.x += a, square.y += b;
   }

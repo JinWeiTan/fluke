@@ -45,22 +45,26 @@ void get_pawn_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
   PinType pin = attacks.pins[piece.id];
   uint8_t step = piece.colour == Colour::White ? 1 : -1;
   // Diagonal pawn capture
-  Square square{piece.square.x + 1, piece.square.y + step};
-  if (board.in_bounds(square) &&
-      board.is_occupied(square, opposite(piece.colour))) {
-    bool is_legal =
-        board.get_move(moves, piece.square, square, MoveType::Step, attacks);
-    if (is_legal) {
-      get_promotion_moves(piece, moves, attacks);
+  if (pin == PinType::None || pin == PinType::LDiagonal) {
+    Square square{piece.square.x + step, piece.square.y + step};
+    if (board.in_bounds(square) &&
+        board.is_occupied(square, opposite(piece.colour))) {
+      bool is_legal =
+          board.get_move(moves, piece.square, square, MoveType::Step, attacks);
+      if (is_legal) {
+        get_promotion_moves(piece, moves, attacks);
+      }
     }
   }
-  Square square2{piece.square.x - 1, piece.square.y + step};
-  if (board.in_bounds(square2) &&
-      board.is_occupied(square2, opposite(piece.colour))) {
-    bool is_legal =
-        board.get_move(moves, piece.square, square2, MoveType::Step, attacks);
-    if (is_legal) {
-      get_promotion_moves(piece, moves, attacks);
+  if (pin == PinType::None || pin == PinType::RDiagonal) {
+    Square square2{piece.square.x - step, piece.square.y + step};
+    if (board.in_bounds(square2) &&
+        board.is_occupied(square2, opposite(piece.colour))) {
+      bool is_legal =
+          board.get_move(moves, piece.square, square2, MoveType::Step, attacks);
+      if (is_legal) {
+        get_promotion_moves(piece, moves, attacks);
+      }
     }
   }
 
@@ -89,13 +93,19 @@ void get_pawn_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
 
   // En passant
   if (piece.square.y == (piece.colour == Colour::White ? 4 : 3)) {
-    if (board.double_step == piece.square.x + 1) {
-      Square square{piece.square.x + 1, piece.square.y + step};
-      board.get_move(moves, piece.square, square, MoveType::EnPassant, attacks);
+    if (pin == PinType::None || pin == PinType::LDiagonal) {
+      if (board.double_step == piece.square.x + step) {
+        Square square{piece.square.x + step, piece.square.y + step};
+        board.get_move(moves, piece.square, square, MoveType::EnPassant,
+                       attacks);
+      }
     }
-    if (board.double_step == piece.square.x - 1) {
-      Square square{piece.square.x - 1, piece.square.y + step};
-      board.get_move(moves, piece.square, square, MoveType::EnPassant, attacks);
+    if (pin == PinType::None || pin == PinType::RDiagonal) {
+      if (board.double_step == piece.square.x - step) {
+        Square square{piece.square.x - step, piece.square.y + step};
+        board.get_move(moves, piece.square, square, MoveType::EnPassant,
+                       attacks);
+      }
     }
   }
 }

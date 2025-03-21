@@ -115,13 +115,14 @@ Board Board::make_move(Move &move) {
 
 void Board::get_moves(std::vector<Position *> &moves, Colour colour) {
   Attacks attacks = Attacks{};
-  for (size_t i = 0; i < 16; i++) {
+  moves = {};
+  for (int i = 0; i < 16; i++) {
     int index = i + (colour == Colour::White ? 16 : 0);
     if (!this->pieces[index].taken) {
       this->pieces[index].get_attacks(*this, attacks);
     }
   }
-  for (size_t i = 0; i < 16; i++) {
+  for (int i = 0; i < 16; i++) {
     int index = i + (colour == Colour::White ? 0 : 16);
     if (!this->pieces[index].taken) {
       this->pieces[index].get_moves(*this, moves, attacks);

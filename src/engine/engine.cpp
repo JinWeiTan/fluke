@@ -32,9 +32,12 @@ BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
   if (depth == 0) {
     return BestMove{Engine::evaluate(board, move->move.colour), -1};
   }
-  board.get_moves(move->next, opposite(move->move.colour));
+  if (!move->generated) {
+    board.get_moves(move->next, opposite(move->move.colour));
+    move->generated = true;
+  }
   if (move->next.size() == 0) {
-    return BestMove{-2000, -1};
+    return BestMove{-4000, -1};
   }
 
   BestMove best = BestMove{EvalMin, -1};

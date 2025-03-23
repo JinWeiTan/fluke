@@ -1,6 +1,5 @@
-vcpkg install
 mkdir build
 cd build
 cmake ..
-msbuild AnchovyEngine.sln
+msbuild AnchovyEngine.sln /property:Configuration=Release
 cd ..

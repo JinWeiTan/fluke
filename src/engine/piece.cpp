@@ -185,34 +185,34 @@ void get_king_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
 
   // Castling
   if (piece.colour == Colour::White) {
-    if (board.castling.white_kingside && !board.pieces[15].taken) {
-      Square square1 = {5, 0}, square2 = {6, 0};
-      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
-          attacks.is_safe(square1) && attacks.is_safe(square2)) {
-        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
-      }
-    }
-    if (board.castling.white_queenside && !board.pieces[8].taken) {
-      Square square1 = {3, 0}, square2 = {2, 0}, square3 = {1, 0};
+    if (board.castling.white_queenside) {
+      Square square1 = {4, 0}, square2 = {5, 0}, square3 = {6, 0};
       if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
           !board.is_occupied(square3) && attacks.is_safe(square1) &&
           attacks.is_safe(square2)) {
+        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
+      }
+    }
+    if (board.castling.white_kingside) {
+      Square square1 = {2, 0}, square2 = {1, 0};
+      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+          attacks.is_safe(square1) && attacks.is_safe(square2)) {
         board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
       }
     }
   } else {
-    if (board.castling.black_kingside && !board.pieces[31].taken) {
-      Square square1 = {5, 7}, square2 = {6, 7};
-      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
-          attacks.is_safe(square1) && attacks.is_safe(square2)) {
-        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
-      }
-    }
-    if (board.castling.black_queenside && !board.pieces[24].taken) {
-      Square square1 = {3, 7}, square2 = {2, 7}, square3 = {1, 7};
+    if (board.castling.black_queenside) {
+      Square square1 = {4, 7}, square2 = {5, 7}, square3 = {6, 7};
       if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
           !board.is_occupied(square3) && attacks.is_safe(square1) &&
           attacks.is_safe(square2)) {
+        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
+      }
+    }
+    if (board.castling.black_kingside) {
+      Square square1 = {2, 7}, square2 = {1, 7};
+      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+          attacks.is_safe(square1) && attacks.is_safe(square2)) {
         board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
       }
     }
@@ -236,9 +236,3 @@ void Piece::get_moves(Board &board, std::vector<Position *> &moves,
     return get_king_moves(*this, board, moves, attacks);
   }
 }
-
-std::string Move::get_name() {
-  return this->from.get_name() + this->to.get_name();
-}
-
-std::string Square::get_name() { return FileName[this->x] + RankName[this->y]; }

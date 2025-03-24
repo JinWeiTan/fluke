@@ -184,36 +184,42 @@ void get_king_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
   get_move_inner_single(piece, board, moves, 0, -1, attacks);
 
   // Castling
-  if (piece.colour == Colour::White) {
-    if (board.castling.white_queenside) {
-      Square square1 = {4, 0}, square2 = {5, 0}, square3 = {6, 0};
-      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
-          !board.is_occupied(square3) && attacks.is_safe(square1) &&
-          attacks.is_safe(square2)) {
-        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
+  if (!attacks.check) {
+    if (piece.colour == Colour::White) {
+      if (board.castling.white_queenside) {
+        Square square1 = {4, 0}, square2 = {5, 0}, square3 = {6, 0};
+        if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+            !board.is_occupied(square3) && attacks.is_safe(square1) &&
+            attacks.is_safe(square2)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle,
+                         attacks);
+        }
       }
-    }
-    if (board.castling.white_kingside) {
-      Square square1 = {2, 0}, square2 = {1, 0};
-      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
-          attacks.is_safe(square1) && attacks.is_safe(square2)) {
-        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
+      if (board.castling.white_kingside) {
+        Square square1 = {2, 0}, square2 = {1, 0};
+        if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+            attacks.is_safe(square1) && attacks.is_safe(square2)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle,
+                         attacks);
+        }
       }
-    }
-  } else {
-    if (board.castling.black_queenside) {
-      Square square1 = {4, 7}, square2 = {5, 7}, square3 = {6, 7};
-      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
-          !board.is_occupied(square3) && attacks.is_safe(square1) &&
-          attacks.is_safe(square2)) {
-        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
+    } else {
+      if (board.castling.black_queenside) {
+        Square square1 = {4, 7}, square2 = {5, 7}, square3 = {6, 7};
+        if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+            !board.is_occupied(square3) && attacks.is_safe(square1) &&
+            attacks.is_safe(square2)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle,
+                         attacks);
+        }
       }
-    }
-    if (board.castling.black_kingside) {
-      Square square1 = {2, 7}, square2 = {1, 7};
-      if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
-          attacks.is_safe(square1) && attacks.is_safe(square2)) {
-        board.get_move(moves, piece.square, square2, MoveType::Castle, attacks);
+      if (board.castling.black_kingside) {
+        Square square1 = {2, 7}, square2 = {1, 7};
+        if (!board.is_occupied(square1) && !board.is_occupied(square2) &&
+            attacks.is_safe(square1) && attacks.is_safe(square2)) {
+          board.get_move(moves, piece.square, square2, MoveType::Castle,
+                         attacks);
+        }
       }
     }
   }

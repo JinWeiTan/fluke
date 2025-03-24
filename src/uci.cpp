@@ -1,21 +1,17 @@
 #include "uci.hpp"
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
-std::vector<std::string> split(std::string s, std::string delimiter) {
-  size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-  std::string token;
-  std::vector<std::string> res;
-
-  while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
-    token = s.substr(pos_start, pos_end - pos_start);
-    pos_start = pos_end + delim_len;
-    res.push_back(token);
+std::vector<std::string> split(const std::string &s, char delim) {
+  std::vector<std::string> result;
+  std::stringstream ss(s);
+  std::string item;
+  while (std::getline(ss, item, delim)) {
+    result.push_back(item);
   }
-
-  res.push_back(s.substr(pos_start));
-  return res;
+  return result;
 }
 
 template <typename T, typename U> U Iterator<T, U>::next() {
@@ -29,6 +25,31 @@ template <typename T, typename U> U Iterator<T, U>::next() {
 
 template <typename T, typename U> bool Iterator<T, U>::end() {
   return this->count >= this->list.size();
+}
+
+std::string format_board(Board &board) {
+  std::string output;
+  for (int i = 7; i >= 0; i--) {
+    for (int j = 7; j >= 0; j--) {
+      output += "+---";
+    }
+    output += "+\n";
+    for (int j = 7; j >= 0; j--) {
+      if (board.board[j][i] == EMPTY) {
+        output += "|   ";
+      } else {
+        Piece &piece = board.pieces[board.board[j][i]];
+        int offset = piece.colour == Colour::White ? 6 : 0;
+        output += "| " + BoardName[piece.type + offset] + " ";
+      }
+    }
+    output += "|\n";
+  }
+  for (int j = 7; j >= 0; j--) {
+    output += "+---";
+  }
+  output += "+";
+  return output;
 }
 
 std::string format_square(Square &square) {
@@ -46,16 +67,17 @@ std::string format_move(Move &move) {
 
 Square parse_square(std::string &square) {
   char x = square[0], y = square[1];
-  return Square{HorizontalMap.at(x), uint8_t(y - '1')};
+  return Square{uint8_t(7 - x + 'a'), uint8_t(y - '1')};
 }
 
 void parse_move(Engine &engine, std::string &command) {
   char x1 = command[0], y1 = command[1], x2 = command[2], y2 = command[3];
-  Square from = Square{HorizontalMap.at(x1), uint8_t(y1 - '1')};
-  Square to = Square{HorizontalMap.at(x2), uint8_t(y2 - '1')};
+  Square from = Square{uint8_t(7 - x1 + 'a'), uint8_t(y1 - '1')};
+  Square to = Square{uint8_t(7 - x2 + 'a'), uint8_t(y2 - '1')};
   MoveType move_type = MoveType(MoveType::PromoteKnight + command[4]);
   if (!engine.move->generated) {
-    engine.board.get_moves(engine.move->next, engine.move->move.colour);
+    engine.board.get_moves(engine.move->next,
+                           opposite(engine.move->move.colour));
     engine.move->generated = true;
   }
 
@@ -79,34 +101,35 @@ void parse_fen(Engine &engine, Commands &commands) {
     }
   }
 
-  FEN placement = FEN{commands.next()};
+  FEN placement = FEN{commands.next(), 0};
   std::map<char, int> PieceMap = FENPieceMap;
-  int x, y;
+  int x = 0, y = 0;
   while (!placement.end()) {
     char ch = placement.next();
     if (ch == '/') {
+      x = 0;
       y++;
     } else if (isdigit(ch)) {
       x += ch - '0';
     } else {
       Piece &piece = engine.board.pieces[PieceMap[ch]];
-      piece.square.x = x, piece.square.y = y;
-      engine.board.board[x][y] = piece.id;
+      piece.square.x = 7 - x, piece.square.y = 7 - y;
+      engine.board.board[7 - x][7 - y] = piece.id;
       PieceMap[ch] += 1;
       x += 1;
     }
   }
 
   if (commands.next() == "w") {
-    engine.move->move.colour = Colour::White;
-  } else {
     engine.move->move.colour = Colour::Black;
+  } else {
+    engine.move->move.colour = Colour::White;
   }
 
-  FEN castling = FEN{commands.next()};
+  FEN castling = FEN{commands.next(), 0};
   engine.board.castling = Castling{};
-  while (!placement.end()) {
-    char ch = placement.next();
+  while (!castling.end()) {
+    char ch = castling.next();
     if (ch == 'Q') {
       engine.board.castling.white_queenside = true;
     } else if (ch == 'q') {
@@ -118,9 +141,9 @@ void parse_fen(Engine &engine, Commands &commands) {
     }
   }
 
-  std::string double_step = commands.next();
-  if (commands.next() != "-") {
-    engine.board.double_step = parse_square(double_step).x;
+  std::string command = commands.next();
+  if (command != "-") {
+    engine.board.double_step = parse_square(command).x;
   }
 
   commands.count += 2;
@@ -133,14 +156,13 @@ void parse_go(Engine &engine) {
     engine.make_move(move_id);
     Move &move = engine.move->move;
     std::cout << "bestmove " << format_move(move) << std::endl;
+    // std::cout << format_board(engine.board) << std::endl;
   }
 }
 
 void parse_position(Engine &engine, Commands &commands) {
   if (commands.next() == "fen") {
     parse_fen(engine, commands);
-  } else {
-    engine.move->move.colour = Colour::White;
   }
   if (commands.next() == "moves") {
     std::string command;
@@ -149,6 +171,7 @@ void parse_position(Engine &engine, Commands &commands) {
     }
     parse_move(engine, command);
   }
+  // std::cout << format_board(engine.board) << std::endl;
 }
 
 void UCI::init() {
@@ -165,7 +188,7 @@ void UCI::init() {
   while (true) {
     std::string input;
     std::getline(std::cin, input);
-    Commands commands = Commands{split(input, " ")};
+    Commands commands = Commands{split(input, ' '), 0};
 
     std::string command = commands.next();
     if (command == "go") {

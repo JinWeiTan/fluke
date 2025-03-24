@@ -29,7 +29,6 @@ struct Board {
   bool is_occupied(Square &square, Colour colour);
   bool in_bounds(Square &square);
   bool is_check(Colour colour);
-  void display();
 };
 
 struct Position {

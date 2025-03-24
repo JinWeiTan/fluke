@@ -37,7 +37,7 @@ BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
     move->generated = true;
   }
   if (move->next.size() == 0) {
-    return BestMove{-4000, -1};
+    return BestMove{-10000, -1};
   }
 
   BestMove best = BestMove{EvalMin, -1};

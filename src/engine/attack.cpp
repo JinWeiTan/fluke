@@ -20,17 +20,18 @@ void get_attack_inner(Piece &piece, Board &board, Attacks &attacks, uint8_t a,
             attacks.checks[origin.x][origin.y] = true;
             origin.x += a, origin.y += b;
           }
+          square.x += a, square.y += b;
           while (board.in_bounds(square)) {
             attacks.attacks[square.x][square.y] = true;
-            square.x += a, square.y += b;
             if (board.is_occupied(square)) {
               break;
             }
+            square.x += a, square.y += b;
           }
         } else {
           PinType &pinned = attacks.pins[board.board[square.x][square.y]];
+          square.x += a, square.y += b;
           while (board.in_bounds(square)) {
-            square.x += a, square.y += b;
             if (board.is_occupied(square)) {
               Piece &target = board.pieces[board.board[square.x][square.y]];
               if (target.type == PieceType::King &&
@@ -39,6 +40,7 @@ void get_attack_inner(Piece &piece, Board &board, Attacks &attacks, uint8_t a,
               }
               break;
             }
+            square.x += a, square.y += b;
           }
         }
       }

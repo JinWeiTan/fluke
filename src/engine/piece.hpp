@@ -11,8 +11,6 @@ inline Colour opposite(Colour colour) { return static_cast<Colour>(!colour); };
 
 enum PieceType : uint8_t { Pawn, Knight, Bishop, Rook, Queen, King };
 
-const std::string PieceName[6] = {"", "N", "B", "R", "Q", "K"};
-
 enum MoveType : uint8_t {
   Step,
   DoubleStep,
@@ -52,4 +50,5 @@ struct Move {
   Colour colour;
   Square from, to;
   MoveType type;
+  bool takes;
 };

@@ -149,7 +149,8 @@ void Board::get_moves(std::vector<Position *> &moves, Colour colour) {
 bool Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
                      MoveType type, Attacks &attacks) {
   Piece &piece = this->pieces[this->board[from.x][from.y]];
-  Move move = Move{piece.id, piece.type, piece.colour, from, to, type};
+  bool takes = this->board[to.x][to.y] != EMPTY;
+  Move move = Move{piece.id, piece.type, piece.colour, from, to, type, takes};
   bool is_legal = true;
   if (move.type == MoveType::EnPassant) {
     Board board = this->make_move(move);
@@ -176,21 +177,6 @@ bool Board::is_occupied(Square &square, Colour colour) {
 
 bool Board::in_bounds(Square &square) {
   return square.x >= 0 && square.x <= 7 && square.y >= 0 && square.y <= 7;
-}
-
-void Board::display() {
-  for (int i = 7; i >= 0; i--) {
-    for (int j = 0; j <= 7; j++) {
-      if (this->board[j][i] == EMPTY) {
-        printf("x ");
-      } else {
-        Piece &piece = this->pieces[this->board[j][i]];
-        printf("%i ", piece.type);
-      }
-    }
-    printf("\n");
-  }
-  printf("\n");
 }
 
 bool is_check_inner(Square &from, Colour colour, Board &board, uint8_t a,

@@ -31,7 +31,7 @@ struct Square {
 
 struct Attacks;
 struct Board;
-struct Position;
+struct Move;
 
 struct Piece {
   uint8_t id;
@@ -39,7 +39,7 @@ struct Piece {
   Colour colour;
   Square square;
   bool taken;
-  void get_moves(Board &board, std::vector<Position *> &moves,
+  void get_moves(Board &board, std::vector<Move> &moves,
                  Attacks &attacks);
   void get_attacks(Board &board, Attacks &attacks);
 };

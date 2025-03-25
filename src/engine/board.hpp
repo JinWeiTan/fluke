@@ -22,17 +22,11 @@ struct Board {
   
   static Board init();
   Board make_move(Move &move);
-  void get_moves(std::vector<Position *> &moves, Colour colour);
-  bool get_move(std::vector<Position*> &moves, Square &from, Square &to,
+  void get_moves(std::vector<Move> &moves, Colour colour);
+  bool get_move(std::vector<Move> &moves, Square &from, Square &to,
            MoveType type, Attacks &attacks);
   bool is_occupied(Square &square);
   bool is_occupied(Square &square, Colour colour);
   bool in_bounds(Square &square);
   bool is_check(Colour colour);
-};
-
-struct Position {
-  Move move;
-  std::vector<Position*> next;
-  bool generated;
 };

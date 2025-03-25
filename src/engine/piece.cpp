@@ -4,7 +4,7 @@
 #include <optional>
 #include <string>
 
-void get_move_inner(Piece &piece, Board &board, std::vector<Position *> &moves,
+void get_move_inner(Piece &piece, Board &board, std::vector<Move> &moves,
                     uint8_t a, uint8_t b, Attacks &attacks) {
   Square square{piece.square.x + a, piece.square.y + b};
   while (board.in_bounds(square) && !board.is_occupied(square, piece.colour)) {
@@ -17,7 +17,7 @@ void get_move_inner(Piece &piece, Board &board, std::vector<Position *> &moves,
 };
 
 void get_move_inner_single(Piece &piece, Board &board,
-                           std::vector<Position *> &moves, uint8_t a, uint8_t b,
+                           std::vector<Move> &moves, uint8_t a, uint8_t b,
                            Attacks &attacks) {
   Square square{piece.square.x + a, piece.square.y + b};
   if (board.in_bounds(square) && !board.is_occupied(square, piece.colour)) {
@@ -25,22 +25,22 @@ void get_move_inner_single(Piece &piece, Board &board,
   }
 };
 
-void get_promotion_moves(Piece &piece, std::vector<Position *> &moves,
+void get_promotion_moves(Piece &piece, std::vector<Move> &moves,
                          Attacks &attacks) {
   if (piece.square.y == (piece.colour == Colour::White ? 6 : 1)) {
-    Position *last_move = moves[moves.size() - 1];
-    last_move->move.type = MoveType::PromoteQueen;
-    last_move->move.piece = PieceType::Queen;
+    Move last_move = moves[moves.size() - 1];
+    last_move.type = MoveType::PromoteQueen;
+    last_move.piece = PieceType::Queen;
     for (size_t i = 0; i <= 3; i++) {
-      Position *move = new Position{last_move->move};
-      move->move.type = MoveType(7 - i);
-      move->move.piece = PieceType(4 - i);
+      Move move = last_move;
+      move.type = MoveType(7 - i);
+      move.piece = PieceType(4 - i);
       moves.push_back(move);
     }
   }
 }
 
-void get_pawn_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
+void get_pawn_moves(Piece &piece, Board &board, std::vector<Move> &moves,
                     Attacks &attacks) {
   PinType pin = attacks.pins[piece.id];
   uint8_t step = piece.colour == Colour::White ? 1 : -1;
@@ -111,7 +111,7 @@ void get_pawn_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
 }
 
 void get_knight_moves(Piece &piece, Board &board,
-                      std::vector<Position *> &moves, Attacks &attacks) {
+                      std::vector<Move> &moves, Attacks &attacks) {
   PinType pin = attacks.pins[piece.id];
   if (pin == PinType::None) {
     get_move_inner_single(piece, board, moves, 1, 2, attacks);
@@ -126,7 +126,7 @@ void get_knight_moves(Piece &piece, Board &board,
 }
 
 void get_bishop_moves(Piece &piece, Board &board,
-                      std::vector<Position *> &moves, Attacks &attacks) {
+                      std::vector<Move> &moves, Attacks &attacks) {
   PinType pin = attacks.pins[piece.id];
   if (pin == PinType::None || pin == PinType::LDiagonal) {
     get_move_inner(piece, board, moves, 1, 1, attacks);
@@ -138,7 +138,7 @@ void get_bishop_moves(Piece &piece, Board &board,
   }
 }
 
-void get_rook_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
+void get_rook_moves(Piece &piece, Board &board, std::vector<Move> &moves,
                     Attacks &attacks) {
   PinType pin = attacks.pins[piece.id];
   if (pin == PinType::None || pin == PinType::Horizontal) {
@@ -151,7 +151,7 @@ void get_rook_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
   }
 }
 
-void get_queen_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
+void get_queen_moves(Piece &piece, Board &board, std::vector<Move> &moves,
                      Attacks &attacks) {
   PinType pin = attacks.pins[piece.id];
   if (pin == PinType::None || pin == PinType::LDiagonal) {
@@ -172,7 +172,7 @@ void get_queen_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
   }
 }
 
-void get_king_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
+void get_king_moves(Piece &piece, Board &board, std::vector<Move> &moves,
                     Attacks &attacks) {
   get_move_inner_single(piece, board, moves, 1, 1, attacks);
   get_move_inner_single(piece, board, moves, -1, 1, attacks);
@@ -225,7 +225,7 @@ void get_king_moves(Piece &piece, Board &board, std::vector<Position *> &moves,
   }
 }
 
-void Piece::get_moves(Board &board, std::vector<Position *> &moves,
+void Piece::get_moves(Board &board, std::vector<Move> &moves,
                       Attacks &attacks) {
   switch (this->type) {
   case PieceType::Pawn:

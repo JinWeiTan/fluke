@@ -129,9 +129,8 @@ Board Board::make_move(Move &move) {
   return board;
 }
 
-void Board::get_moves(std::vector<Position *> &moves, Colour colour) {
+void Board::get_moves(std::vector<Move> &moves, Colour colour) {
   Attacks attacks = Attacks{};
-  moves = {};
   for (int i = 0; i < 16; i++) {
     int index = i + (colour == Colour::White ? 16 : 0);
     if (!this->pieces[index].taken) {
@@ -146,7 +145,7 @@ void Board::get_moves(std::vector<Position *> &moves, Colour colour) {
   }
 }
 
-bool Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
+bool Board::get_move(std::vector<Move> &moves, Square &from, Square &to,
                      MoveType type, Attacks &attacks) {
   Piece &piece = this->pieces[this->board[from.x][from.y]];
   bool takes = this->board[to.x][to.y] != EMPTY;
@@ -161,7 +160,7 @@ bool Board::get_move(std::vector<Position *> &moves, Square &from, Square &to,
     is_legal = attacks.checks[to.x][to.y];
   }
   if (is_legal) {
-    moves.push_back(new Position{move});
+    moves.push_back(move);
   }
   return is_legal;
 }

@@ -3,11 +3,6 @@
 #include "engine.hpp"
 #include <iostream>
 
-struct BestMove {
-  Eval eval;
-  int move;
-};
-
 Eval WhitePawnWeights[8][8];
 Eval BlackPawnWeights[8][8];
 Eval PieceWeights[8][8];
@@ -16,38 +11,42 @@ Eval KingWeights[8][8];
 Engine Engine::init() {
   for (size_t i = 0; i < 8; i++) {
     for (size_t j = 0; j < 8; j++) {
-      int value = std::max(std::abs(3.5 - i), std::abs(3.5 - j));
+      // int value = std::max(std::abs(3.5 - i), std::abs(3.5 - j));
+      int value = sqrt(pow((3.5 - i), 2) + pow((3.5 - j), 2));
       WhitePawnWeights[i][j] = i;
       BlackPawnWeights[i][j] = 7 - i;
-      PieceWeights[i][j] = 3 - value + 3;
+      PieceWeights[i][j] = 4 - value + 3;
       KingWeights[i][j] = value + 3;
     }
   }
-  Position *move = new Position{Move{}};
-  return Engine{Board::init(), move};
+  return Engine{Board::init(), Move{}};
 }
 
-BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
+BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
                             int beta) {
   if (depth == 0) {
-    return BestMove{Engine::evaluate(board, move->move.colour), -1};
+    return BestMove{Engine::evaluate(board, move.colour), false};
   }
-  if (!move->generated) {
-    board.get_moves(move->next, opposite(move->move.colour));
-    move->generated = true;
-  }
-  if (move->next.size() == 0) {
-    return BestMove{-10000, -1};
+  std::vector<Move> moves;
+  board.get_moves(moves, opposite(move.colour));
+  if (moves.size() == 0) {
+    return BestMove{-10000, true};
   }
 
-  BestMove best = BestMove{EvalMin, -1};
-  for (int i = 0; i < move->next.size(); i++) {
-    Board next = board.make_move(move->next[i]->move);
+  BestMove best = BestMove{EvalMin, false};
+  for (int i = 0; i < moves.size(); i++) {
+    // Autoqueen optimization
+    if (moves[i].type >= MoveType::PromoteKnight &&
+        moves[i].type != MoveType::PromoteQueen) {
+      continue;
+    }
+
+    Board new_board = board.make_move(moves[i]);
     BestMove result =
-        search_moves_inner(depth - 1, move->next[i], next, -beta, -alpha);
+        search_moves_inner(depth - 1, moves[i], new_board, -beta, -alpha);
     if (-result.eval > best.eval) {
       best.eval = -result.eval;
-      best.move = i;
+      best.move = moves[i];
     }
     if (best.eval > alpha) {
       alpha = best.eval;
@@ -59,29 +58,9 @@ BestMove search_moves_inner(int depth, Position *move, Board &board, int alpha,
   return best;
 }
 
-int Engine::search_moves(int depth) {
-  return search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax)
-      .move;
-}
-
-void clean_moves_inner(Position *move) {
-  for (int i = 0; i < move->next.size(); i++) {
-    clean_moves_inner(move->next[i]);
-  }
-  delete move;
-}
-
-void Engine::clean_moves(int except) {
-  for (int i = 0; i < this->move->next.size(); i++) {
-    if (i != except) {
-      clean_moves_inner(this->move->next[i]);
-    }
-  }
-}
-
-void Engine::make_move(int move) {
-  this->move = this->move->next[move];
-  this->board = this->board.make_move(this->move->move);
+BestMove Engine::search_moves(int depth) {
+  BestMove move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax);
+  return move;
 }
 
 Eval Engine::evaluate(Board &board, Colour colour) {

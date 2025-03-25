@@ -74,24 +74,24 @@ void parse_move(Engine &engine, std::string &command) {
   char x1 = command[0], y1 = command[1], x2 = command[2], y2 = command[3];
   Square from = Square{uint8_t(7 - x1 + 'a'), uint8_t(y1 - '1')};
   Square to = Square{uint8_t(7 - x2 + 'a'), uint8_t(y2 - '1')};
-  MoveType move_type = MoveType(MoveType::PromoteKnight + command[4]);
-  if (!engine.move->generated) {
-    engine.board.get_moves(engine.move->next,
-                           opposite(engine.move->move.colour));
-    engine.move->generated = true;
-  }
+  std::vector<Move> moves;
+  engine.board.get_moves(moves, opposite(engine.move.colour));
 
-  int move_id = -1;
-  for (int i = 0; i < engine.move->next.size(); i++) {
-    Move &move = engine.move->next[i]->move;
-    bool is_move = (command.size() == 5) ? (move.type == move_type) : true;
-    if (move.from == from && move.to == to && is_move) {
-      move_id = i;
+  Move best_move;
+  for (int i = 0; i < moves.size(); i++) {
+    bool is_move = true;
+    if (command.size() == 5) {
+      is_move = moves[i].type ==
+                MoveType(MoveType::PromoteKnight + PromoteMap.at(command[4]));
+    }
+    if (moves[i].from == from && moves[i].to == to && is_move) {
+      best_move = moves[i];
+      break;
     }
   }
 
-  engine.clean_moves(move_id);
-  engine.make_move(move_id);
+  engine.board = engine.board.make_move(best_move);
+  engine.move = best_move;
 }
 
 void parse_fen(Engine &engine, Commands &commands) {
@@ -99,6 +99,9 @@ void parse_fen(Engine &engine, Commands &commands) {
     for (size_t j = 0; j < 8; j++) {
       engine.board.board[i][j] = EMPTY;
     }
+  }
+  for (auto &&piece : engine.board.pieces) {
+    piece.taken = true;
   }
 
   FEN placement = FEN{commands.next(), 0};
@@ -115,15 +118,16 @@ void parse_fen(Engine &engine, Commands &commands) {
       Piece &piece = engine.board.pieces[PieceMap[ch]];
       piece.square.x = 7 - x, piece.square.y = 7 - y;
       engine.board.board[7 - x][7 - y] = piece.id;
+      piece.taken = false;
       PieceMap[ch] += 1;
       x += 1;
     }
   }
 
   if (commands.next() == "w") {
-    engine.move->move.colour = Colour::Black;
+    engine.move.colour = Colour::Black;
   } else {
-    engine.move->move.colour = Colour::White;
+    engine.move.colour = Colour::White;
   }
 
   FEN castling = FEN{commands.next(), 0};
@@ -150,28 +154,31 @@ void parse_fen(Engine &engine, Commands &commands) {
 }
 
 void parse_go(Engine &engine) {
-  int move_id = engine.search_moves(5);
-  if (move_id != -1) {
-    engine.clean_moves(move_id);
-    engine.make_move(move_id);
-    Move &move = engine.move->move;
-    std::cout << "bestmove " << format_move(move) << std::endl;
+  BestMove best_move = engine.search_moves(5);
+  if (!best_move.end) {
+    engine.board = engine.board.make_move(best_move.move);
+    engine.move = best_move.move;
+    std::cout << "bestmove " << format_move(engine.move) << std::endl;
     // std::cout << format_board(engine.board) << std::endl;
   }
 }
 
-void parse_position(Engine &engine, Commands &commands) {
+void parse_position(UCI &uci, Commands &commands) {
   if (commands.next() == "fen") {
-    parse_fen(engine, commands);
+    if (!uci.started) {
+      parse_fen(uci.engine, commands);
+    } else {
+      commands.count += 6;
+    }
   }
   if (commands.next() == "moves") {
     std::string command;
     while (!commands.end()) {
       command = commands.next();
     }
-    parse_move(engine, command);
+    parse_move(uci.engine, command);
   }
-  // std::cout << format_board(engine.board) << std::endl;
+  // std::cout << format_board(uci.engine.board) << std::endl;
 }
 
 void UCI::init() {
@@ -194,12 +201,12 @@ void UCI::init() {
     if (command == "go") {
       parse_go(uci.engine);
     } else if (command == "position") {
-      parse_position(uci.engine, commands);
+      parse_position(uci, commands);
     } else if (command == "isready") {
       std::cout << "readyok\n";
     } else if (command == "ucinewgame") {
       uci.engine.board = Board::init();
-      uci.engine.clean_moves(-1);
+      uci.started = false;
     } else if (command == "quit") {
       exit(0);
     }

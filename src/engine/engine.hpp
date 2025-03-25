@@ -8,12 +8,16 @@ const Eval EvalMin = INT16_MIN;
 
 const Eval PieceValue[6] = {10, 30, 30, 50, 90, 800};
 
+struct BestMove {
+  Eval eval;
+  bool end;
+  Move move;
+};
+
 struct Engine {
     Board board;
-    Position* move;
+    Move move;
     static Engine init();
-    void make_move(int move);
-    int search_moves(int depth);
-    void clean_moves(int except);
+    BestMove search_moves(int depth);
     static Eval evaluate(Board &board, Colour colour);
 };

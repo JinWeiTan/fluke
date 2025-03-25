@@ -6,6 +6,7 @@
 
 struct UCI {
   Engine engine;
+  bool started;
 
   void static init();
 };

@@ -3,29 +3,28 @@
 #include <iostream>
 #include <math.h>
 
-// Eval WhitePawnWeights[8][8];
-// Eval BlackPawnWeights[8][8];
-// Eval PieceWeights[8][8];
-// Eval KingWeights[8][8];
+Eval WhitePawnWeights[8][8];
+Eval BlackPawnWeights[8][8];
+Eval PieceWeights[8][8];
+Eval KingWeights[8][8];
 
 Engine Engine::init() {
-  // for (size_t i = 0; i < 8; i++) {
-  //   for (size_t j = 0; j < 8; j++) {
-  //     // int value = std::max(std::abs(3.5 - i), std::abs(3.5 - j));
-  //     int value = std::sqrt(std::pow((3.5 - i), 2) + std::pow((3.5 - j), 2));
-  //     WhitePawnWeights[i][j] = i;
-  //     BlackPawnWeights[i][j] = 7 - i;
-  //     PieceWeights[i][j] = 4 - value + 3;
-  //     KingWeights[i][j] = value + 3;
-  //   }
-  // }
+  for (size_t i = 0; i < 8; i++) {
+    for (size_t j = 0; j < 8; j++) {
+      // int value = std::max(std::abs(3.5 - i), std::abs(3.5 - j));
+      int value = std::sqrt(std::pow((3.5 - i), 2) + std::pow((3.5 - j), 2));
+      WhitePawnWeights[i][j] = i;
+      BlackPawnWeights[i][j] = 7 - i;
+      PieceWeights[i][j] = 4 - value + 3;
+      KingWeights[i][j] = value + 3;
+    }
+  }
   return Engine{Board::init(), Move{}};
 }
 
 BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
                             int beta) {
-  if ((depth <= 0 && !move.takes) || depth <= -3) {
-    // if (depth == 0) {
+  if ((depth <= 0 && !move.takes) || depth <= -4) {
     return BestMove{Engine::evaluate(board, move.colour), false};
   }
   std::vector<Move> moves;
@@ -102,45 +101,22 @@ void Engine::bench(int depth, bool debug) {
   std::cout << count << " nodes " << nps << " nps\n";
 }
 
-Eval get_weights(Piece &piece) {
-  if (piece.colour == Colour::White) {
-    switch (piece.type) {
-    case PieceType::Pawn:
-      return PawnWeights[7 - piece.square.y][piece.square.x];
-    case PieceType::Knight:
-      return KnightWeights[7 - piece.square.y][piece.square.x];
-    case PieceType::Bishop:
-      return BishopWeights[7 - piece.square.y][piece.square.x];
-    case PieceType::Rook:
-      return RookWeights[7 - piece.square.y][piece.square.x];
-    case PieceType::Queen:
-      return QueenWeights[7 - piece.square.y][piece.square.x];
-    case PieceType::King:
-      return KingStartWeights[7 - piece.square.y][piece.square.x];
-    }
-  } else {
-    switch (piece.type) {
-    case PieceType::Pawn:
-      return PawnWeights[piece.square.y][piece.square.x];
-    case PieceType::Knight:
-      return KnightWeights[piece.square.y][piece.square.x];
-    case PieceType::Bishop:
-      return BishopWeights[piece.square.y][piece.square.x];
-    case PieceType::Rook:
-      return RookWeights[piece.square.y][piece.square.x];
-    case PieceType::Queen:
-      return QueenWeights[piece.square.y][piece.square.x];
-    case PieceType::King:
-      return KingStartWeights[piece.square.y][piece.square.x];
-    }
-  }
-}
-
 Eval Engine::evaluate(Board &board, Colour colour) {
   Eval eval = 0;
   for (auto &&piece : board.pieces) {
     if (!piece.taken) {
-      Eval weights = get_weights(piece);
+      Eval weights;
+      if (piece.type == PieceType::Pawn) {
+        if (piece.colour == Colour::White) {
+          weights = WhitePawnWeights[piece.square.x][piece.square.y];
+        } else {
+          weights = BlackPawnWeights[piece.square.x][piece.square.y];
+        }
+      } else if (piece.type == PieceType::King) {
+        weights = KingWeights[piece.square.x][piece.square.y];
+      } else {
+        weights = PieceWeights[piece.square.x][piece.square.y];
+      }
       eval += (PieceValue[piece.type] + weights) *
               ((piece.colour == colour) ? -1 : 1);
     }

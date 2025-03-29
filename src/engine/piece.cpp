@@ -28,10 +28,10 @@ void get_move_inner_single(Piece &piece, Board &board,
 void get_promotion_moves(Piece &piece, std::vector<Move> &moves,
                          Attacks &attacks) {
   if (piece.square.y == (piece.colour == Colour::White ? 6 : 1)) {
-    Move last_move = moves[moves.size() - 1];
+    Move &last_move = moves[moves.size() - 1];
     last_move.type = MoveType::PromoteQueen;
     last_move.piece = PieceType::Queen;
-    for (size_t i = 0; i <= 3; i++) {
+    for (size_t i = 1; i <= 3; i++) {
       Move move = last_move;
       move.type = MoveType(7 - i);
       move.piece = PieceType(4 - i);
@@ -43,7 +43,7 @@ void get_promotion_moves(Piece &piece, std::vector<Move> &moves,
 void get_pawn_moves(Piece &piece, Board &board, std::vector<Move> &moves,
                     Attacks &attacks) {
   PinType pin = attacks.pins[piece.id];
-  uint8_t step = piece.colour == Colour::White ? 1 : -1;
+  int step = piece.colour == Colour::White ? 1 : -1;
   // Diagonal pawn capture
   if (pin == PinType::None || pin == PinType::LDiagonal) {
     Square square{piece.square.x + step, piece.square.y + step};
@@ -241,4 +241,17 @@ void Piece::get_moves(Board &board, std::vector<Move> &moves,
   case PieceType::King:
     return get_king_moves(*this, board, moves, attacks);
   }
+}
+
+std::string Square::format() {
+  return HorizontalName[this->x] + VerticalName[this->y];
+}
+
+std::string Move::format() {
+  std::string promote = "";
+  if (this->type >= MoveType::PromoteKnight) {
+    int offset = this->colour == Colour::White ? 4 : 0;
+    promote = PromoteName[this->type - MoveType::PromoteKnight + offset];
+  }
+  return this->from.format() + this->to.format() + promote;
 }

@@ -9,5 +9,6 @@ struct Attacks {
   bool attacks[8][8];
   bool checks[8][8];
   bool check;
+  bool double_check;
   bool is_safe(Square &square);
 };

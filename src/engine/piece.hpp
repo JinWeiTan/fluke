@@ -27,6 +27,7 @@ struct Square {
   bool operator==(const Square &square) {
     return this->x == square.x && this->y == square.y;
   };
+  std::string format();
 };
 
 struct Attacks;
@@ -39,8 +40,7 @@ struct Piece {
   Colour colour;
   Square square;
   bool taken;
-  void get_moves(Board &board, std::vector<Move> &moves,
-                 Attacks &attacks);
+  void get_moves(Board &board, std::vector<Move> &moves, Attacks &attacks);
   void get_attacks(Board &board, Attacks &attacks);
 };
 
@@ -51,4 +51,9 @@ struct Move {
   Square from, to;
   MoveType type;
   bool takes;
+  std::string format();
 };
+
+const std::string PromoteName[8] = {"n", "b", "r", "q", "N", "B", "R", "Q"};
+const std::string HorizontalName[8] = {"h", "g", "f", "e", "d", "c", "b", "a"};
+const std::string VerticalName[8] = {"1", "2", "3", "4", "5", "6", "7", "8"};

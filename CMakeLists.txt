@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.14)
 
 project(AnchovyEngine LANGUAGES CXX)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "-O3 -w")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -w")
+endif()
+
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

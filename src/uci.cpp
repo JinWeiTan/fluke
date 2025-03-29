@@ -27,44 +27,6 @@ template <typename T, typename U> bool Iterator<T, U>::end() {
   return this->count >= this->list.size();
 }
 
-std::string format_board(Board &board) {
-  std::string output;
-  for (int i = 7; i >= 0; i--) {
-    for (int j = 7; j >= 0; j--) {
-      output += "+---";
-    }
-    output += "+\n";
-    for (int j = 7; j >= 0; j--) {
-      if (board.board[j][i] == EMPTY) {
-        output += "|   ";
-      } else {
-        Piece &piece = board.pieces[board.board[j][i]];
-        int offset = piece.colour == Colour::White ? 6 : 0;
-        output += "| " + BoardName[piece.type + offset] + " ";
-      }
-    }
-    output += "|\n";
-  }
-  for (int j = 7; j >= 0; j--) {
-    output += "+---";
-  }
-  output += "+";
-  return output;
-}
-
-std::string format_square(Square &square) {
-  return HorizontalName[square.x] + VerticalName[square.y];
-}
-
-std::string format_move(Move &move) {
-  std::string promote = "";
-  if (move.type >= MoveType::PromoteKnight) {
-    int offset = move.colour == Colour::White ? 4 : 0;
-    promote = PromoteName[move.type - MoveType::PromoteKnight + offset];
-  }
-  return format_square(move.from) + format_square(move.to) + promote;
-}
-
 Square parse_square(std::string &square) {
   char x = square[0], y = square[1];
   return Square{uint8_t(7 - x + 'a'), uint8_t(y - '1')};
@@ -158,8 +120,8 @@ void parse_go(Engine &engine) {
   if (!best_move.end) {
     engine.board = engine.board.make_move(best_move.move);
     engine.move = best_move.move;
-    std::cout << "bestmove " << format_move(engine.move) << std::endl;
-    // std::cout << format_board(engine.board) << std::endl;
+    std::cout << "bestmove " << engine.move.format() << std::endl;
+    // std::cout << engine.board.format() << std::endl;
   }
 }
 
@@ -167,6 +129,7 @@ void parse_position(UCI &uci, Commands &commands) {
   if (commands.next() == "fen") {
     if (!uci.started) {
       parse_fen(uci.engine, commands);
+      uci.started = true;
     } else {
       commands.count += 6;
     }
@@ -178,7 +141,7 @@ void parse_position(UCI &uci, Commands &commands) {
     }
     parse_move(uci.engine, command);
   }
-  // std::cout << format_board(uci.engine.board) << std::endl;
+  // std::cout << uci.engine.board.format() << std::endl;
 }
 
 void UCI::init() {
@@ -207,6 +170,12 @@ void UCI::init() {
     } else if (command == "ucinewgame") {
       uci.engine.board = Board::init();
       uci.started = false;
+    } else if (command == "bench") {
+      std::string ch = commands.next();
+      int depth = ch == "" ? 5 : (ch[0] - '0');
+      uci.engine.bench(depth, ch != "");
+    } else if (command == "display") {
+      std::cout << uci.engine.board.format() << "\n";
     } else if (command == "quit") {
       exit(0);
     }

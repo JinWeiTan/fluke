@@ -22,11 +22,15 @@ struct Board {
   
   static Board init();
   Board make_move(Move &move);
-  void get_moves(std::vector<Move> &moves, Colour colour);
+  bool get_moves(std::vector<Move> &moves, Colour colour);
   bool get_move(std::vector<Move> &moves, Square &from, Square &to,
            MoveType type, Attacks &attacks);
   bool is_occupied(Square &square);
   bool is_occupied(Square &square, Colour colour);
   bool in_bounds(Square &square);
   bool is_check(Colour colour);
+  std::string format();
 };
+
+const std::string BoardName[12] = {"p", "n", "b", "r", "q", "k",
+                                   "P", "N", "B", "R", "Q", "K"};

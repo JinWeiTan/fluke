@@ -3,3 +3,6 @@
 /build
 /.idea
 /.ccls-cache
+/bench/*
+
+!/bench/Makefile

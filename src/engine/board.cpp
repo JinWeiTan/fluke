@@ -99,6 +99,7 @@ Board Board::make_move(Move &move) {
     }
   } else if (move.type == MoveType::EnPassant) {
     board.pieces[board.board[move.to.x][move.from.y]].taken = true;
+    board.board[move.to.x][move.from.y] = EMPTY;
   } else if (move.type == MoveType::DoubleStep) {
     board.double_step = move.to.x;
   }
@@ -129,7 +130,7 @@ Board Board::make_move(Move &move) {
   return board;
 }
 
-void Board::get_moves(std::vector<Move> &moves, Colour colour) {
+bool Board::get_moves(std::vector<Move> &moves, Colour colour) {
   Attacks attacks = Attacks{};
   for (int i = 0; i < 16; i++) {
     int index = i + (colour == Colour::White ? 16 : 0);
@@ -143,12 +144,14 @@ void Board::get_moves(std::vector<Move> &moves, Colour colour) {
       this->pieces[index].get_moves(*this, moves, attacks);
     }
   }
+  return attacks.check;
 }
 
 bool Board::get_move(std::vector<Move> &moves, Square &from, Square &to,
                      MoveType type, Attacks &attacks) {
   Piece &piece = this->pieces[this->board[from.x][from.y]];
-  bool takes = this->board[to.x][to.y] != EMPTY;
+  bool takes =
+      (this->board[to.x][to.y] != EMPTY) || (type == MoveType::EnPassant);
   Move move = Move{piece.id, piece.type, piece.colour, from, to, type, takes};
   bool is_legal = true;
   if (move.type == MoveType::EnPassant) {
@@ -158,6 +161,9 @@ bool Board::get_move(std::vector<Move> &moves, Square &from, Square &to,
     is_legal = !attacks.attacks[to.x][to.y];
   } else if (attacks.check) {
     is_legal = attacks.checks[to.x][to.y];
+    if (attacks.double_check) {
+      is_legal = false;
+    }
   }
   if (is_legal) {
     moves.push_back(move);
@@ -228,4 +234,29 @@ bool Board::is_check(Colour colour) {
          is_check_single(square, colour, *this, -2, -1, PieceType::Knight) ||
          is_check_single(square, colour, *this, 1, step, PieceType::Pawn) ||
          is_check_single(square, colour, *this, -1, step, PieceType::Pawn);
+}
+
+std::string Board::format() {
+  std::string output;
+  for (int i = 7; i >= 0; i--) {
+    for (int j = 7; j >= 0; j--) {
+      output += "+---";
+    }
+    output += "+\n";
+    for (int j = 7; j >= 0; j--) {
+      if (this->board[j][i] == EMPTY) {
+        output += "|   ";
+      } else {
+        Piece &piece = this->pieces[this->board[j][i]];
+        int offset = piece.colour == Colour::White ? 6 : 0;
+        output += "| " + BoardName[piece.type + offset] + " ";
+      }
+    }
+    output += "|\n";
+  }
+  for (int j = 7; j >= 0; j--) {
+    output += "+---";
+  }
+  output += "+";
+  return output;
 }

@@ -115,14 +115,35 @@ void parse_fen(Engine &engine, Commands &commands) {
   commands.count += 2;
 }
 
-void parse_go(Engine &engine) {
-  BestMove best_move = engine.search_moves(5);
-  if (!best_move.end) {
-    engine.board = engine.board.make_move(best_move.move);
-    engine.move = best_move.move;
-    std::cout << "bestmove " << engine.move.format() << std::endl;
-    // std::cout << engine.board.format() << std::endl;
+void parse_go(Engine &engine, Commands &commands) {
+  std::string command = commands.next();
+  if (command == "perft") {
+    std::string ch = commands.next();
+    int depth = ch == "" ? 5 : (ch[0] - '0');
+    engine.perft(depth);
+  } else {
+    BestMove best_move = engine.search_moves(5);
+    if (!best_move.end) {
+      engine.board = engine.board.make_move(best_move.move);
+      engine.move = best_move.move;
+      std::cout << "bestmove " << engine.move.format() << std::endl;
+    }
   }
+}
+
+void parse_bench(Engine &engine) {
+  NodeCount = 0;
+  uint64_t start = Engine::get_timestamp();
+  for (auto &&position : FENPositions) {
+    Commands fen = Commands{split(position, ' '), 0};
+    uint64_t before = NodeCount;
+    parse_fen(engine, fen);
+    engine.search_moves(5);
+    // std::cout << position << " fen " << NodeCount - before << " nodes\n";
+  }
+  uint64_t end = Engine::get_timestamp();
+  uint64_t nps = NodeCount / (end == start ? 1 : end - start) * 1000;
+  std::cout << NodeCount << " nodes " << nps << " nps\n";
 }
 
 void parse_position(UCI &uci, Commands &commands) {
@@ -162,7 +183,7 @@ void UCI::init() {
 
     std::string command = commands.next();
     if (command == "go") {
-      parse_go(uci.engine);
+      parse_go(uci.engine, commands);
     } else if (command == "position") {
       parse_position(uci, commands);
     } else if (command == "isready") {
@@ -171,9 +192,7 @@ void UCI::init() {
       uci.engine.board = Board::init();
       uci.started = false;
     } else if (command == "bench") {
-      std::string ch = commands.next();
-      int depth = ch == "" ? 5 : (ch[0] - '0');
-      uci.engine.bench(depth, ch != "");
+      parse_bench(uci.engine);
     } else if (command == "display") {
       std::cout << uci.engine.board.format() << "\n";
     } else if (command == "quit") {

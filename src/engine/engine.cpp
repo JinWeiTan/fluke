@@ -8,6 +8,8 @@ Eval BlackPawnWeights[8][8];
 Eval PieceWeights[8][8];
 Eval KingWeights[8][8];
 
+uint64_t NodeCount = 0;
+
 Engine Engine::init() {
   for (size_t i = 0; i < 8; i++) {
     for (size_t j = 0; j < 8; j++) {
@@ -24,6 +26,7 @@ Engine Engine::init() {
 
 BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
                             int beta) {
+  NodeCount += 1;
   if ((depth <= 0 && !move.takes) || depth <= -4) {
     return BestMove{Engine::evaluate(board, move.colour), false};
   }
@@ -55,7 +58,7 @@ BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
     if (best.eval > alpha) {
       alpha = best.eval;
     }
-    if (alpha > beta) {
+    if (alpha >= beta) {
       break;
     }
   }
@@ -68,37 +71,38 @@ BestMove Engine::search_moves(int depth) {
   return move;
 }
 
-uint64_t get_timestamp() {
+uint64_t Engine::get_timestamp() {
   auto now = std::chrono::system_clock::now();
   auto duration = now.time_since_epoch();
   return std::chrono::duration_cast<std::chrono::milliseconds>(duration)
       .count();
 }
 
-uint64_t bench_inner(int depth, Move &move, Board &board, bool debug) {
+void perft_inner(int depth, Move &move, Board &board, bool debug) {
   std::vector<Move> moves;
   board.get_moves(moves, opposite(move.colour));
   if (depth == 1) {
-    return moves.size();
+    NodeCount += moves.size();
+    return;
   }
   uint64_t count = 0;
   for (int i = 0; i < moves.size(); i++) {
     Board new_board = board.make_move(moves[i]);
-    int new_count = bench_inner(depth - 1, moves[i], new_board, false);
+    uint64_t before = NodeCount;
+    perft_inner(depth - 1, moves[i], new_board, false);
     if (debug) {
-      std::cout << moves[i].format() << ": " << new_count << "\n";
+      std::cout << moves[i].format() << ": " << (NodeCount - before) << "\n";
     }
-    count += new_count;
   }
-  return count;
 }
 
-void Engine::bench(int depth, bool debug) {
-  uint64_t start = get_timestamp();
-  uint64_t count = bench_inner(depth, this->move, this->board, debug);
-  uint64_t end = get_timestamp();
-  uint64_t nps = count / (end == start ? 1 : end - start) * 1000;
-  std::cout << count << " nodes " << nps << " nps\n";
+void Engine::perft(int depth) {
+  NodeCount = 0;
+  uint64_t start = Engine::get_timestamp();
+  perft_inner(depth, this->move, this->board, true);
+  uint64_t end = Engine::get_timestamp();
+  uint64_t nps = NodeCount / (end == start ? 1 : end - start) * 1000;
+  std::cout << NodeCount << " nodes " << nps << " nps\n";
 }
 
 Eval Engine::evaluate(Board &board, Colour colour) {

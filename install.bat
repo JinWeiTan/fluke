@@ -1,5 +1,5 @@
 mkdir build
 cd build
-cmake ..
-msbuild AnchovyEngine.sln /property:Configuration=Release
+cmake .. -G "Unix Makefiles"
+make EXE=Fluke
 cd ..

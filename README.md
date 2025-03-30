@@ -1,3 +1,3 @@
-# Anchovy Chess Engine
+# Fluke Chess Engine
 
 Stockfish but worse

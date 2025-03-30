@@ -168,7 +168,7 @@ void parse_position(UCI &uci, Commands &commands) {
 void UCI::init() {
   UCI uci = UCI{Engine::init()};
 
-  std::cout << "id name Anchovy\n";
+  std::cout << "id name Fluke\n";
   std::cout << "id author JinWeiTan\n";
 
   std::cout << "option name Threads type spin default 1 min 1 max 1\n";

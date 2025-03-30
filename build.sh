@@ -1,2 +1,0 @@
-clang++ -std=c++20 -obuild/AnchovyServer.out -Wno-everything src/main.cpp src/server.cpp src/message.cpp src/engine/piece.cpp  src/engine/board.cpp src/engine/engine.cpp -Ivcpkg_installed/x64-linux/include -Lvcpkg_installed/x64-linux/lib -luSockets -lz
-./build/AnchovyServer.out

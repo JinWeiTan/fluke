@@ -162,7 +162,7 @@ void parse_bench(Engine &engine) {
     Commands fen = Commands{split(position, ' '), 0};
     uint64_t before = NodeCount;
     parse_fen(engine, fen);
-    engine.search_moves(Mode{6, -2});
+    engine.search_moves(Mode{4, -2});
     // std::cout << position << " fen " << NodeCount - before << " nodes\n";
   }
   uint64_t end = Engine::get_timestamp();

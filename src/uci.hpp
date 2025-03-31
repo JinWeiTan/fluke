@@ -8,7 +8,8 @@ struct UCI {
   Engine engine;
   bool started;
 
-  void static init();
+  void bench();
+  void run_loop();
 };
 
 template <typename T, typename U> struct Iterator {

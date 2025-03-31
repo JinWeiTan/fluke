@@ -155,14 +155,14 @@ void parse_go(Engine &engine, Commands &commands) {
   }
 }
 
-void parse_bench(Engine &engine) {
+void UCI::bench() {
   NodeCount = 0;
   uint64_t start = Engine::get_timestamp();
   for (auto &&position : FENPositions) {
     Commands fen = Commands{split(position, ' '), 0};
     uint64_t before = NodeCount;
-    parse_fen(engine, fen);
-    engine.search_moves(Mode{4, -2});
+    parse_fen(this->engine, fen);
+    this->engine.search_moves(Mode{4, -2});
     // std::cout << position << " fen " << NodeCount - before << " nodes\n";
   }
   uint64_t end = Engine::get_timestamp();
@@ -189,9 +189,7 @@ void parse_position(UCI &uci, Commands &commands) {
   // std::cout << uci.engine.board.format() << std::endl;
 }
 
-void UCI::init() {
-  UCI uci = UCI{Engine::init()};
-
+void UCI::run_loop() {
   std::cout << "id name Fluke\n";
   std::cout << "id author JinWeiTan\n";
 
@@ -207,18 +205,16 @@ void UCI::init() {
 
     std::string command = commands.next();
     if (command == "go") {
-      parse_go(uci.engine, commands);
+      parse_go(this->engine, commands);
     } else if (command == "position") {
-      parse_position(uci, commands);
+      parse_position((*this), commands);
     } else if (command == "isready") {
       std::cout << "readyok\n";
     } else if (command == "ucinewgame") {
-      uci.engine.board = Board::init();
-      uci.started = false;
-    } else if (command == "bench") {
-      parse_bench(uci.engine);
-    } else if (command == "display") {
-      std::cout << uci.engine.board.format() << "\n";
+      this->engine.board = Board::init();
+      this->started = false;
+    }  else if (command == "display") {
+      std::cout << this->engine.board.format() << "\n";
     } else if (command == "quit") {
       exit(0);
     }

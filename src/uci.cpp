@@ -69,6 +69,7 @@ void parse_fen(Engine &engine, Commands &commands) {
   FEN placement = FEN{commands.next(), 0};
   std::map<char, int> PieceMap = FENPieceMap;
   int x = 0, y = 0;
+  engine.board.piece_count = 0;
   while (!placement.end()) {
     char ch = placement.next();
     if (ch == '/') {
@@ -81,6 +82,9 @@ void parse_fen(Engine &engine, Commands &commands) {
       piece.square.x = 7 - x, piece.square.y = 7 - y;
       engine.board.board[7 - x][7 - y] = piece.id;
       piece.taken = false;
+      if (piece.type > PieceType::Pawn && piece.type < PieceType::King) {
+        engine.board.piece_count += 1;
+      }
       PieceMap[ch] += 1;
       x += 1;
     }
@@ -116,18 +120,38 @@ void parse_fen(Engine &engine, Commands &commands) {
 }
 
 void parse_go(Engine &engine, Commands &commands) {
-  std::string command = commands.next();
-  if (command == "perft") {
-    std::string ch = commands.next();
-    int depth = ch == "" ? 5 : (ch[0] - '0');
-    engine.perft(depth);
-  } else {
-    BestMove best_move = engine.search_moves(5);
-    if (!best_move.end) {
-      engine.board = engine.board.make_move(best_move.move);
-      engine.move = best_move.move;
-      std::cout << "bestmove " << engine.move.format() << std::endl;
+  int btime = 600000, wtime = 600000;
+  while (!commands.end()) {
+    std::string command = commands.next();
+    if (command == "wtime") {
+      std::string command = commands.next();
+      wtime = std::stoi(command);
+    } else if (command == "btime") {
+      std::string command = commands.next();
+      btime = std::stoi(command);
+    } else if (command == "perft") {
+      std::string ch = commands.next();
+      int depth = ch == "" ? 5 : (ch[0] - '0');
+      engine.perft(depth);
+      return;
     }
+  }
+  int time = engine.move.colour == Colour::White ? btime : wtime;
+  Mode mode = Mode{6, -3};
+  if (time <= 10000) {
+    mode = Mode{4, -2};
+    std::cout << "info mode fast" << std::endl;
+  } else if (time <= 180000) {
+    mode = Mode{5, -4};
+    std::cout << "info mode medium" << std::endl;
+  } else {
+    std::cout << "info mode slow" << std::endl;
+  }
+  BestMove best_move = engine.search_moves(mode);
+  if (!best_move.end) {
+    engine.board = engine.board.make_move(best_move.move);
+    engine.move = best_move.move;
+    std::cout << "bestmove " << engine.move.format() << std::endl;
   }
 }
 
@@ -138,7 +162,7 @@ void parse_bench(Engine &engine) {
     Commands fen = Commands{split(position, ' '), 0};
     uint64_t before = NodeCount;
     parse_fen(engine, fen);
-    engine.search_moves(5);
+    engine.search_moves(Mode{6, -2});
     // std::cout << position << " fen " << NodeCount - before << " nodes\n";
   }
   uint64_t end = Engine::get_timestamp();

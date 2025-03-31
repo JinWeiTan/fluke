@@ -47,6 +47,7 @@ Board Board::init() {
   }
   board.castling = Castling{true, true, true, true};
   board.double_step = 9;
+  board.piece_count = 14;
   return board;
 }
 
@@ -64,6 +65,7 @@ Board Board::make_move(Move &move) {
   if (board.board[move.to.x][move.to.y] != EMPTY) {
     Piece &target = board.pieces[board.board[move.to.x][move.to.y]];
     target.taken = true;
+    board.piece_count -= 1;
     if (target.type == PieceType::Rook) {
       if (target.colour == Colour::White) {
         if (move.to == Square{0, 0}) {
@@ -99,6 +101,7 @@ Board Board::make_move(Move &move) {
     }
   } else if (move.type == MoveType::EnPassant) {
     board.pieces[board.board[move.to.x][move.from.y]].taken = true;
+    board.piece_count -= 1;
     board.board[move.to.x][move.from.y] = EMPTY;
   } else if (move.type == MoveType::DoubleStep) {
     board.double_step = move.to.x;

@@ -19,6 +19,7 @@ struct Board {
   uint8_t board[8][8];
   Castling castling;
   uint8_t double_step;
+  uint8_t piece_count;
   
   static Board init();
   Board make_move(Move &move);

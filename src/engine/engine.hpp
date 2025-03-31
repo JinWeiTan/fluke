@@ -6,7 +6,12 @@ using Eval = int16_t;
 const Eval EvalMax = INT16_MAX;
 const Eval EvalMin = INT16_MIN;
 
-const Eval PieceValue[6] = {10, 30, 30, 50, 90, 0};
+const Eval PieceValue[6] = {100, 300, 300, 500, 900, 0};
+
+struct Mode {
+  int depth;
+  int qsearch;
+};
 
 struct BestMove {
   Eval eval;
@@ -20,7 +25,7 @@ struct Engine {
   Board board;
   Move move;
   static Engine init();
-  BestMove search_moves(int depth);
+  BestMove search_moves(Mode mode);
   void perft(int depth);
   static Eval evaluate(Board &board, Colour colour);
   static uint64_t get_timestamp();

@@ -2,9 +2,9 @@ CXX = g++
 
 CXXFLAGS = -w -O3
 
-EXE = fluke
+EXE = bench/fluke
 
-TARGET = $(EXE:%=bench/%)
+TARGET = $(EXE)
 
 TARGET_DEL = $(TARGET:%=%.exe)
 

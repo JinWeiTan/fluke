@@ -6,7 +6,20 @@
 Eval WhitePawnWeights[8][8];
 Eval BlackPawnWeights[8][8];
 Eval PieceWeights[8][8];
-Eval KingWeights[8][8];
+Eval WhiteKingWeights[8][8];
+Eval BlackKingWeights[8][8];
+// clang-format off
+Eval KingEndWeights[8][8] = {
+  -20, -10, -10, -10, -10, -10, -10, -20,
+  -5,   0,   5,   5,   5,   5,   0,  -5,
+  -10, -5,   20,  30,  30,  20,  -5, -10,
+  -15, -10,  35,  45,  45,  35, -10, -15,
+  -20, -15,  30,  40,  40,  30, -15, -20,
+  -25, -20,  20,  25,  25,  20, -20, -25,
+  -30, -25,   0,   0,   0,   0, -25, -30,
+  -50, -30, -30, -30, -30, -30, -30, -50
+};
+// clang-format on
 
 uint64_t NodeCount = 0;
 
@@ -15,19 +28,27 @@ Engine Engine::init() {
     for (size_t j = 0; j < 8; j++) {
       // int value = std::max(std::abs(3.5 - i), std::abs(3.5 - j));
       int value = std::sqrt(std::pow((3.5 - i), 2) + std::pow((3.5 - j), 2));
-      WhitePawnWeights[i][j] = i;
-      BlackPawnWeights[i][j] = 7 - i;
-      PieceWeights[i][j] = 4 - value + 3;
-      KingWeights[i][j] = value + 3;
+      WhitePawnWeights[i][j] = j * 5;
+      BlackPawnWeights[i][j] = (7 - j) * 5;
+      if ((i == 2 || i == 3) && !(j == 3 || j == 4)) {
+        WhitePawnWeights[j][i] = -5;
+      };
+      if ((i == 4 || i == 5) && !(j == 3 || j == 4)) {
+        BlackPawnWeights[j][i] = -5;
+      };
+      PieceWeights[i][j] = (4 - value) * 5;
+      BlackKingWeights[i][j] = j * 20;
+      WhiteKingWeights[i][j] = (7 - j) * 20;
     }
   }
+
   return Engine{Board::init(), Move{}};
 }
 
 BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
-                            int beta) {
+                            int beta, Mode mode) {
   NodeCount += 1;
-  if ((depth <= 0 && !move.takes) || depth <= -4) {
+  if ((depth <= 0 && !move.takes) || depth <= mode.qsearch) {
     return BestMove{Engine::evaluate(board, move.colour), false};
   }
   std::vector<Move> moves;
@@ -50,7 +71,7 @@ BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
 
     Board new_board = board.make_move(moves[i]);
     BestMove result =
-        search_moves_inner(depth - 1, moves[i], new_board, -beta, -alpha);
+        search_moves_inner(depth - 1, moves[i], new_board, -beta, -alpha, mode);
     if (-result.eval > best.eval) {
       best.eval = -result.eval;
       best.move = moves[i];
@@ -65,9 +86,9 @@ BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
   return best;
 }
 
-BestMove Engine::search_moves(int depth) {
+BestMove Engine::search_moves(Mode mode) {
   BestMove move =
-      search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax);
+      search_moves_inner(mode.depth, this->move, this->board, EvalMin, EvalMax, mode);
   return move;
 }
 
@@ -117,7 +138,15 @@ Eval Engine::evaluate(Board &board, Colour colour) {
           weights = BlackPawnWeights[piece.square.x][piece.square.y];
         }
       } else if (piece.type == PieceType::King) {
-        weights = KingWeights[piece.square.x][piece.square.y];
+        if (board.piece_count > 4) {
+          if (piece.colour == Colour::White) {
+            weights = WhiteKingWeights[piece.square.x][piece.square.y];
+          } else {
+            weights = BlackKingWeights[piece.square.x][piece.square.y];
+          }
+        } else {
+          weights = KingEndWeights[piece.square.x][piece.square.y];
+        }
       } else {
         weights = PieceWeights[piece.square.x][piece.square.y];
       }

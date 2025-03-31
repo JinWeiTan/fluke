@@ -8,19 +8,19 @@ Stockfish but worse
 
 This project requires Make and CMake
 
-# Setup
+## Setup
 
 ```bash
 install
 ```
 
-# Building
+## Building
 
 ```bash
 build
 ```
 
-# Running
+## Running
 
 ```bash
 build\fluke.exe

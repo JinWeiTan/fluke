@@ -13,7 +13,7 @@ SRCS = src/main.cpp src/uci.cpp src/engine/attack.cpp src/engine/board.cpp \
 
 OBJS = $(SRCS:%.cpp=bench/%.o)
 
-all: createfile $(TARGET)
+all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
@@ -23,7 +23,7 @@ createfile:
 	if not exist bench\src mkdir bench\src
 	if not exist bench\src\engine mkdir bench\src\engine
 
-bench/%.o: %.cpp
+bench/%.o: %.cpp createfile
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 run: $(TARGET)

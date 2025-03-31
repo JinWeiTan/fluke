@@ -18,12 +18,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
-createfile:
-	mkdir -p bench
-	mkdir -p bench\src
-	mkdir -p bench\src\engine
-
-bench/%.o: %.cpp createfile
+bench/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 run: $(TARGET)

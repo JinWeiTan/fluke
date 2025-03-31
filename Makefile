@@ -19,9 +19,9 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
 createfile:
-	if not exist bench mkdir bench
-	if not exist bench\src mkdir bench\src
-	if not exist bench\src\engine mkdir bench\src\engine
+	mkdir -p bench
+	mkdir -p bench\src
+	mkdir -p bench\src\engine
 
 bench/%.o: %.cpp createfile
 	$(CXX) $(CXXFLAGS) -c $< -o $@

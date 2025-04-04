@@ -51,6 +51,7 @@ struct Move {
   Square from, to;
   MoveType type;
   bool takes;
+  int8_t score;
   std::string format();
 };
 

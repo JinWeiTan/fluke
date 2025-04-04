@@ -1,4 +1,5 @@
 #include "engine.hpp"
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <math.h>
@@ -53,6 +54,8 @@ BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
   }
   std::vector<Move> moves;
   bool check = board.get_moves(moves, opposite(move.colour));
+  std::sort(moves.begin(), moves.end(),
+            [](Move &a, Move &b) { return a.score > b.score; });
   if (moves.size() == 0) {
     if (check) {
       return BestMove{Eval(-10000 - depth), true};
@@ -87,8 +90,8 @@ BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
 }
 
 BestMove Engine::search_moves(Mode mode) {
-  BestMove move =
-      search_moves_inner(mode.depth, this->move, this->board, EvalMin, EvalMax, mode);
+  BestMove move = search_moves_inner(mode.depth, this->move, this->board,
+                                     EvalMin, EvalMax, mode);
   return move;
 }
 

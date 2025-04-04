@@ -1,1 +1,0 @@
-make EXE=Fluke -C build

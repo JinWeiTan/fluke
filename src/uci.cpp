@@ -162,11 +162,12 @@ void UCI::bench() {
     Commands fen = Commands{split(position, ' '), 0};
     uint64_t before = NodeCount;
     parse_fen(this->engine, fen);
-    this->engine.search_moves(Mode{4, -2});
+    this->engine.search_moves(Mode{5, 0});
     // std::cout << position << " fen " << NodeCount - before << " nodes\n";
   }
   uint64_t end = Engine::get_timestamp();
   uint64_t nps = NodeCount / (end == start ? 1 : end - start) * 1000;
+  std::cout << "info time " << end - start << "ms\n";
   std::cout << NodeCount << " nodes " << nps << " nps\n";
 }
 

@@ -155,7 +155,16 @@ bool Board::get_move(std::vector<Move> &moves, Square &from, Square &to,
   Piece &piece = this->pieces[this->board[from.x][from.y]];
   bool takes =
       (this->board[to.x][to.y] != EMPTY) || (type == MoveType::EnPassant);
-  Move move = Move{piece.id, piece.type, piece.colour, from, to, type, takes};
+  int8_t score = 0;
+  if (this->board[to.x][to.y] != EMPTY) {
+    score = 10 * (this->pieces[this->board[to.x][to.y]].type - piece.type);
+  } else if (type >= MoveType::PromoteKnight) {
+    score = type - MoveType::PromoteKnight + 1;
+  } else if (attacks.attacks[to.x][to.y]) {
+    score = -1;
+  }
+  Move move =
+      Move{piece.id, piece.type, piece.colour, from, to, type, takes, score};
   bool is_legal = true;
   if (move.type == MoveType::EnPassant) {
     Board board = this->make_move(move);

@@ -19,6 +19,7 @@ struct Board {
   uint8_t board[8][8];
   Castling castling;
   uint8_t double_step;
+  uint64_t hash;
   uint8_t piece_count;
   
   static Board init();

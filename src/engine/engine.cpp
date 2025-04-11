@@ -23,6 +23,7 @@ Eval KingEndWeights[8][8] = {
 // clang-format on
 
 uint64_t NodeCount = 0;
+Table Engine::table = Table::init();
 
 Engine Engine::init() {
   for (size_t i = 0; i < 8; i++) {
@@ -42,26 +43,45 @@ Engine Engine::init() {
       WhiteKingWeights[i][j] = (7 - j) * 20;
     }
   }
-
   return Engine{Board::init(), Move{}};
 }
 
-BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
+BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
                             int beta, Mode mode) {
   NodeCount += 1;
-  if ((depth <= 0 && !move.takes) || depth <= mode.qsearch) {
-    return BestMove{Engine::evaluate(board, move.colour), false};
+
+  int alphaOrig = alpha;
+  if (Engine::table.has_entry(board.hash)) {
+    TableEntry entry = Engine::table.get_entry(board.hash);
+    if (entry.depth >= depth) {
+      if (entry.type == EntryType::Exact) {
+        return BestMove{entry.eval, false};
+      } else if (entry.type == EntryType::Lower) {
+        alpha = std::max(alpha, int(entry.eval));
+      } else if (entry.type == EntryType::Upper) {
+        beta = std::min(beta, int(entry.eval));
+      }
+      if (alpha >= beta) {
+        return BestMove{entry.eval, false};
+      }
+    }
   }
+
+  if (depth == 0) {
+    Eval eval = Engine::evaluate(board, move.colour);
+    // Engine::table.set_entry(board.hash, TableEntry{eval, 0, EntryType::Exact});
+    return BestMove{eval, false};
+  }
+
   std::vector<Move> moves;
   bool check = board.get_moves(moves, opposite(move.colour));
   std::sort(moves.begin(), moves.end(),
             [](Move &a, Move &b) { return a.score > b.score; });
+
   if (moves.size() == 0) {
-    if (check) {
-      return BestMove{Eval(-10000 - depth), true};
-    } else {
-      return BestMove{Eval(-depth), true};
-    }
+    Eval eval = check ? (-10000 - depth) : -depth;
+    // Engine::table.set_entry(board.hash, TableEntry{eval, 0, EntryType::Exact});
+    return BestMove{eval, true};
   }
 
   BestMove best = BestMove{EvalMin, false};
@@ -86,6 +106,11 @@ BestMove search_moves_inner(int depth, Move &move, Board &board, int alpha,
       break;
     }
   }
+
+  EntryType type = (best.eval <= alphaOrig) ? EntryType::Upper
+                   : (best.eval >= beta)    ? EntryType::Lower
+                                            : EntryType::Exact;
+  Engine::table.set_entry(board.hash, TableEntry{best.eval, depth, type});
   return best;
 }
 
@@ -102,7 +127,7 @@ uint64_t Engine::get_timestamp() {
       .count();
 }
 
-void perft_inner(int depth, Move &move, Board &board, bool debug) {
+void perft_inner(int8_t depth, Move &move, Board &board, bool debug) {
   std::vector<Move> moves;
   board.get_moves(moves, opposite(move.colour));
   if (depth == 1) {
@@ -120,7 +145,7 @@ void perft_inner(int depth, Move &move, Board &board, bool debug) {
   }
 }
 
-void Engine::perft(int depth) {
+void Engine::perft(int8_t depth) {
   NodeCount = 0;
   uint64_t start = Engine::get_timestamp();
   perft_inner(depth, this->move, this->board, true);

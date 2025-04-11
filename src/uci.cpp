@@ -95,6 +95,8 @@ void parse_fen(Engine &engine, Commands &commands) {
   } else {
     engine.move.colour = Colour::White;
   }
+  engine.board.hash =
+      Engine::table.get_hash(engine.board, opposite(engine.move.colour));
 
   FEN castling = FEN{commands.next(), 0};
   engine.board.castling = Castling{};
@@ -131,7 +133,7 @@ void parse_go(Engine &engine, Commands &commands) {
       btime = std::stoi(command);
     } else if (command == "perft") {
       std::string ch = commands.next();
-      int depth = ch == "" ? 5 : (ch[0] - '0');
+      int8_t depth = ch == "" ? 5 : (ch[0] - '0');
       engine.perft(depth);
       return;
     }
@@ -163,8 +165,12 @@ void UCI::bench() {
     uint64_t before = NodeCount;
     parse_fen(this->engine, fen);
     this->engine.search_moves(Mode{5, 0});
-    // std::cout << position << " fen " << NodeCount - before << " nodes\n";
+    // BestMove best = this->engine.search_moves(Mode{5, 0});
+    // std::cout << position << " fen " << best.move.format() << " best\n";
   }
+  // BestMove best = this->engine.search_moves(Mode{2, 0});
+  // std::cout << best.move.format() << " best\n";
+
   uint64_t end = Engine::get_timestamp();
   uint64_t nps = NodeCount / (end == start ? 1 : end - start) * 1000;
   std::cout << "info time " << end - start << "ms\n";
@@ -214,7 +220,7 @@ void UCI::run_loop() {
     } else if (command == "ucinewgame") {
       this->engine.board = Board::init();
       this->started = false;
-    }  else if (command == "display") {
+    } else if (command == "display") {
       std::cout << this->engine.board.format() << "\n";
     } else if (command == "quit") {
       exit(0);

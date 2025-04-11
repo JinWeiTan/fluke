@@ -133,23 +133,13 @@ void parse_go(Engine &engine, Commands &commands) {
       btime = std::stoi(command);
     } else if (command == "perft") {
       std::string ch = commands.next();
-      int8_t depth = ch == "" ? 5 : (ch[0] - '0');
+      uint8_t depth = ch == "" ? 5 : (ch[0] - '0');
       engine.perft(depth);
       return;
     }
   }
   int time = engine.move.colour == Colour::White ? btime : wtime;
-  Mode mode = Mode{6, -3};
-  if (time <= 10000) {
-    mode = Mode{4, -2};
-    std::cout << "info mode fast" << std::endl;
-  } else if (time <= 180000) {
-    mode = Mode{5, -4};
-    std::cout << "info mode medium" << std::endl;
-  } else {
-    std::cout << "info mode slow" << std::endl;
-  }
-  BestMove best_move = engine.search_moves(mode);
+  BestMove best_move = engine.search_moves(15, double(time) / 1000, true);
   if (!best_move.end) {
     engine.board = engine.board.make_move(best_move.move);
     engine.move = best_move.move;
@@ -158,23 +148,21 @@ void parse_go(Engine &engine, Commands &commands) {
 }
 
 void UCI::bench() {
-  NodeCount = 0;
+  Engine::NodeCount = 0;
   uint64_t start = Engine::get_timestamp();
   for (auto &&position : FENPositions) {
     Commands fen = Commands{split(position, ' '), 0};
-    uint64_t before = NodeCount;
+    uint64_t before = Engine::NodeCount;
     parse_fen(this->engine, fen);
-    this->engine.search_moves(Mode{5, 0});
-    // BestMove best = this->engine.search_moves(Mode{5, 0});
+    this->engine.search_moves(10, 1, false);
+    // BestMove best = this->engine.search_moves(5);
     // std::cout << position << " fen " << best.move.format() << " best\n";
   }
-  // BestMove best = this->engine.search_moves(Mode{2, 0});
-  // std::cout << best.move.format() << " best\n";
 
   uint64_t end = Engine::get_timestamp();
-  uint64_t nps = NodeCount / (end == start ? 1 : end - start) * 1000;
+  uint64_t nps = Engine::NodeCount / (end == start ? 1 : end - start) * 1000;
   std::cout << "info time " << end - start << "ms\n";
-  std::cout << NodeCount << " nodes " << nps << " nps\n";
+  std::cout << Engine::NodeCount << " nodes " << nps << " nps\n";
 }
 
 void parse_position(UCI &uci, Commands &commands) {

@@ -22,7 +22,7 @@ Eval KingEndWeights[8][8] = {
 };
 // clang-format on
 
-uint64_t NodeCount = 0;
+uint64_t Engine::NodeCount = 0;
 Table Engine::table = Table::init();
 
 Engine Engine::init() {
@@ -46,9 +46,9 @@ Engine Engine::init() {
   return Engine{Board::init(), Move{}};
 }
 
-BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
-                            int beta, Mode mode) {
-  NodeCount += 1;
+BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
+                            int beta) {
+  Engine::NodeCount += 1;
 
   int alphaOrig = alpha;
   if (Engine::table.has_entry(board.hash)) {
@@ -69,7 +69,8 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
 
   if (depth == 0) {
     Eval eval = Engine::evaluate(board, move.colour);
-    // Engine::table.set_entry(board.hash, TableEntry{eval, 0, EntryType::Exact});
+    // Engine::table.set_entry(board.hash, TableEntry{eval, 0,
+    // EntryType::Exact});
     return BestMove{eval, false};
   }
 
@@ -80,7 +81,8 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
 
   if (moves.size() == 0) {
     Eval eval = check ? (-10000 - depth) : -depth;
-    // Engine::table.set_entry(board.hash, TableEntry{eval, 0, EntryType::Exact});
+    // Engine::table.set_entry(board.hash, TableEntry{eval, 0,
+    // EntryType::Exact});
     return BestMove{eval, true};
   }
 
@@ -94,7 +96,7 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
 
     Board new_board = board.make_move(moves[i]);
     BestMove result =
-        search_moves_inner(depth - 1, moves[i], new_board, -beta, -alpha, mode);
+        search_moves_inner(depth - 1, moves[i], new_board, -beta, -alpha);
     if (-result.eval > best.eval) {
       best.eval = -result.eval;
       best.move = moves[i];
@@ -114,9 +116,28 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
   return best;
 }
 
-BestMove Engine::search_moves(Mode mode) {
-  BestMove move = search_moves_inner(mode.depth, this->move, this->board,
-                                     EvalMin, EvalMax, mode);
+BestMove Engine::search_moves(uint8_t max_depth, double time, bool debug) {
+  Engine::NodeCount = 0;
+  double allocated = time * 0.025;
+  auto start = std::chrono::steady_clock::now();
+  BestMove move;
+  size_t depth = 1;
+  for (depth = 1; depth <= max_depth; depth++) {
+    move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax);
+    auto end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration<double>(end - start).count();
+    if (debug) {
+      std::cout << "info depth " << depth << " best " << move.move.format()
+                << " time " << duration << "s\n";
+    }
+    if (duration > allocated) {
+      if (debug) {
+        uint64_t nps = Engine::NodeCount / duration;
+        std::cout << "info time " << duration << "s " << nps << " nps\n";
+      }
+      break;
+    }
+  }
   return move;
 }
 
@@ -127,31 +148,32 @@ uint64_t Engine::get_timestamp() {
       .count();
 }
 
-void perft_inner(int8_t depth, Move &move, Board &board, bool debug) {
+void perft_inner(uint8_t depth, Move &move, Board &board, bool debug) {
   std::vector<Move> moves;
   board.get_moves(moves, opposite(move.colour));
   if (depth == 1) {
-    NodeCount += moves.size();
+    Engine::NodeCount += moves.size();
     return;
   }
   uint64_t count = 0;
   for (int i = 0; i < moves.size(); i++) {
     Board new_board = board.make_move(moves[i]);
-    uint64_t before = NodeCount;
+    uint64_t before = Engine::NodeCount;
     perft_inner(depth - 1, moves[i], new_board, false);
     if (debug) {
-      std::cout << moves[i].format() << ": " << (NodeCount - before) << "\n";
+      std::cout << moves[i].format() << ": " << (Engine::NodeCount - before)
+                << "\n";
     }
   }
 }
 
-void Engine::perft(int8_t depth) {
-  NodeCount = 0;
+void Engine::perft(uint8_t depth) {
+  Engine::NodeCount = 0;
   uint64_t start = Engine::get_timestamp();
   perft_inner(depth, this->move, this->board, true);
   uint64_t end = Engine::get_timestamp();
-  uint64_t nps = NodeCount / (end == start ? 1 : end - start) * 1000;
-  std::cout << NodeCount << " nodes " << nps << " nps\n";
+  uint64_t nps = Engine::NodeCount / (end == start ? 1 : end - start) * 1000;
+  std::cout << Engine::NodeCount << " nodes " << nps << " nps\n";
 }
 
 Eval Engine::evaluate(Board &board, Colour colour) {

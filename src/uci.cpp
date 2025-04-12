@@ -154,8 +154,8 @@ void UCI::bench() {
     Commands fen = Commands{split(position, ' '), 0};
     uint64_t before = Engine::NodeCount;
     parse_fen(this->engine, fen);
-    this->engine.search_moves(10, 1, false);
-    // BestMove best = this->engine.search_moves(5);
+    this->engine.search_moves_depth(5);
+    // BestMove best = this->engine.search_moves_depth(5);
     // std::cout << position << " fen " << best.move.format() << " best\n";
   }
 

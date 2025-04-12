@@ -183,8 +183,9 @@ bool Board::get_move(std::vector<Move> &moves, Square &from, Square &to,
   } else if (attacks.attacks[to.x][to.y]) {
     score = -1;
   }
+  uint8_t move_id = moves.size();
   Move move =
-      Move{piece.id, piece.type, piece.colour, from, to, type, takes, score};
+      Move{move_id, piece.type, piece.colour, from, to, type, takes, score};
   bool is_legal = true;
   if (move.type == MoveType::EnPassant) {
     Board board = this->make_move(move);

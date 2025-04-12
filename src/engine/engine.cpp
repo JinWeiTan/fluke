@@ -47,13 +47,14 @@ Engine Engine::init() {
 }
 
 BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
-                            int beta) {
+                            int beta, uint8_t max_depth) {
   Engine::NodeCount += 1;
 
   int alphaOrig = alpha;
+  uint8_t bestMove = UINT8_MAX;
   if (Engine::table.has_entry(board.hash)) {
     TableEntry entry = Engine::table.get_entry(board.hash);
-    if (entry.depth >= depth) {
+    if (entry.depth >= depth && depth != max_depth) {
       if (entry.type == EntryType::Exact) {
         return BestMove{entry.eval, false};
       } else if (entry.type == EntryType::Lower) {
@@ -65,6 +66,7 @@ BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
         return BestMove{entry.eval, false};
       }
     }
+    bestMove = entry.move;
   }
 
   if (depth == 0) {
@@ -76,6 +78,9 @@ BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
 
   std::vector<Move> moves;
   bool check = board.get_moves(moves, opposite(move.colour));
+  if (bestMove != UINT8_MAX) {
+    moves[bestMove].score = INT8_MAX;
+  }
   std::sort(moves.begin(), moves.end(),
             [](Move &a, Move &b) { return a.score > b.score; });
 
@@ -95,8 +100,8 @@ BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
     }
 
     Board new_board = board.make_move(moves[i]);
-    BestMove result =
-        search_moves_inner(depth - 1, moves[i], new_board, -beta, -alpha);
+    BestMove result = search_moves_inner(depth - 1, moves[i], new_board, -beta,
+                                         -alpha, max_depth);
     if (-result.eval > best.eval) {
       best.eval = -result.eval;
       best.move = moves[i];
@@ -112,18 +117,30 @@ BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
   EntryType type = (best.eval <= alphaOrig) ? EntryType::Upper
                    : (best.eval >= beta)    ? EntryType::Lower
                                             : EntryType::Exact;
-  Engine::table.set_entry(board.hash, TableEntry{best.eval, depth, type});
+  Engine::table.set_entry(
+      board.hash, TableEntry{best.eval, depth, type, best.move.move_id});
   return best;
 }
 
+BestMove Engine::search_moves_depth(uint8_t max_depth) {
+  BestMove move;
+  for (size_t depth = 1; depth <= max_depth; depth++) {
+    move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax,
+                              depth);
+  }
+  return move;
+}
+
 BestMove Engine::search_moves(uint8_t max_depth, double time, bool debug) {
-  Engine::NodeCount = 0;
+  if (debug) {
+    Engine::NodeCount = 0;
+  }
   double allocated = time * 0.025;
   auto start = std::chrono::steady_clock::now();
   BestMove move;
-  size_t depth = 1;
-  for (depth = 1; depth <= max_depth; depth++) {
-    move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax);
+  for (size_t depth = 1; depth <= max_depth; depth++) {
+    move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax,
+                              depth);
     auto end = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration<double>(end - start).count();
     if (debug) {

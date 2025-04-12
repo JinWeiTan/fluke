@@ -45,7 +45,7 @@ struct Piece {
 };
 
 struct Move {
-  uint8_t piece_id;
+  uint8_t move_id;
   PieceType piece;
   Colour colour;
   Square from, to;

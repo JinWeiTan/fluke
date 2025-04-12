@@ -33,6 +33,7 @@ void get_promotion_moves(Piece &piece, std::vector<Move> &moves,
     last_move.piece = PieceType::Queen;
     for (size_t i = 1; i <= 3; i++) {
       Move move = last_move;
+      move.move_id += i;
       move.type = MoveType(7 - i);
       move.piece = PieceType(4 - i);
       moves.push_back(move);

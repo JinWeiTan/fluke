@@ -135,7 +135,7 @@ void parse_go(Engine &engine, Commands &commands) {
       btime = std::stoi(command);
     } else if (command == "perft") {
       std::string ch = commands.next();
-      uint8_t depth = ch == "" ? 5 : (ch[0] - '0');
+      int8_t depth = ch == "" ? 5 : (ch[0] - '0');
       engine.perft(depth);
       return;
     }
@@ -151,7 +151,7 @@ void parse_go(Engine &engine, Commands &commands) {
 
 void UCI::bench() {
   Engine::NodeCount = 0;
-  uint64_t start = Engine::get_timestamp();
+  this->engine.timer.start();
   for (auto &&position : FENPositions) {
     Commands fen = Commands{split(position, ' '), 0};
     uint64_t before = Engine::NodeCount;
@@ -161,9 +161,8 @@ void UCI::bench() {
     // std::cout << position << " fen " << best.move.format() << " best\n";
   }
 
-  uint64_t end = Engine::get_timestamp();
-  uint64_t nps = Engine::NodeCount / (end == start ? 1 : end - start) * 1000;
-  std::cout << "info time " << end - start << "ms\n";
+  uint64_t nps = Engine::NodeCount / this->engine.timer.stop();
+  std::cout << "info time " << this->engine.timer.stop() << "s\n";
   std::cout << Engine::NodeCount << " nodes " << nps << " nps\n";
 }
 
@@ -187,7 +186,7 @@ void parse_position(UCI &uci, Commands &commands) {
 }
 
 void UCI::run_loop() {
-  std::cout << "id name Fluke\n";
+  std::cout << "id name Fluke 4\n";
   std::cout << "id author JinWeiTan\n";
 
   std::cout << "option name Threads type spin default 1 min 1 max 1\n";

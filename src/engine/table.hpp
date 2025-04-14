@@ -11,7 +11,7 @@ enum EntryType : uint8_t { Exact, Upper, Lower };
 
 struct TableEntry {
   Eval eval;
-  uint8_t depth;
+  int8_t depth;
   EntryType type;
   uint8_t move;
   uint64_t hash;

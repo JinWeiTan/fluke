@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 #include <math.h>
+#include <float.h>
 
 Eval WhitePawnWeights[8][8];
 Eval BlackPawnWeights[8][8];
@@ -25,6 +26,13 @@ Eval KingEndWeights[8][8] = {
 uint64_t Engine::NodeCount = 0;
 Table Engine::table = Table::init();
 
+void Timer::start() { this->start_time = std::chrono::steady_clock::now(); }
+
+double Timer::stop() {
+  auto end_time = std::chrono::steady_clock::now();
+  return std::chrono::duration<double>(end_time - this->start_time).count();
+}
+
 Engine Engine::init() {
   for (size_t i = 0; i < 8; i++) {
     for (size_t j = 0; j < 8; j++) {
@@ -46,9 +54,14 @@ Engine Engine::init() {
   return Engine{Board::init(), Move{}};
 }
 
-BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
-                            int beta, uint8_t max_depth) {
+BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
+                            int beta, uint8_t max_depth, double allocated,
+                            Timer &timer) {
   Engine::NodeCount += 1;
+
+  if (timer.stop() > allocated) {
+    return BestMove{0, false, Move{}, true};
+  }
 
   int alphaOrig = alpha;
   uint8_t bestMove = UINT8_MAX;
@@ -69,7 +82,7 @@ BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
     bestMove = entry.move;
   }
 
-  if (depth == 0) {
+  if ((depth <= 0 && !move.takes) || depth <= -1) {
     Eval eval = Engine::evaluate(board, move.colour);
     // Engine::table.set_entry(board.hash, TableEntry{eval, 0,
     // EntryType::Exact});
@@ -101,7 +114,10 @@ BestMove search_moves_inner(uint8_t depth, Move &move, Board &board, int alpha,
 
     Board new_board = board.make_move(moves[i]);
     BestMove result = search_moves_inner(depth - 1, moves[i], new_board, -beta,
-                                         -alpha, max_depth);
+                                         -alpha, max_depth, allocated, timer);
+    if(result.cancelled) {
+      return result;
+    }
     if (-result.eval > best.eval) {
       best.eval = -result.eval;
       best.move = moves[i];
@@ -126,7 +142,7 @@ BestMove Engine::search_moves_depth(uint8_t max_depth) {
   BestMove move;
   for (size_t depth = 1; depth <= max_depth; depth++) {
     move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax,
-                              depth);
+                              depth, DBL_MAX, this->timer);
   }
   return move;
 }
@@ -136,36 +152,29 @@ BestMove Engine::search_moves(uint8_t max_depth, double time, bool debug) {
     Engine::NodeCount = 0;
   }
   double allocated = time * 0.025;
-  auto start = std::chrono::steady_clock::now();
+  this->timer.start();
   BestMove move;
   for (size_t depth = 1; depth <= max_depth; depth++) {
-    move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax,
-                              depth);
-    auto end = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration<double>(end - start).count();
-    if (debug) {
-      std::cout << "info depth " << depth << " best " << move.move.format()
-                << " time " << duration << "s\n";
-    }
-    if (duration > allocated) {
+    BestMove best_move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax,
+                              depth, allocated, this->timer);
+    auto duration = this->timer.stop();
+    if (best_move.cancelled) {
       if (debug) {
         uint64_t nps = Engine::NodeCount / duration;
         std::cout << "info time " << duration << "s " << nps << " nps\n";
       }
       break;
     }
+    move = best_move;
+    if (debug) {
+      std::cout << "info depth " << depth << " best " << move.move.format()
+                << " time " << duration << "s\n";
+    }
   }
   return move;
 }
 
-uint64_t Engine::get_timestamp() {
-  auto now = std::chrono::system_clock::now();
-  auto duration = now.time_since_epoch();
-  return std::chrono::duration_cast<std::chrono::milliseconds>(duration)
-      .count();
-}
-
-void perft_inner(uint8_t depth, Move &move, Board &board, bool debug) {
+void perft_inner(int8_t depth, Move &move, Board &board, bool debug) {
   std::vector<Move> moves;
   board.get_moves(moves, opposite(move.colour));
   if (depth == 1) {
@@ -184,12 +193,11 @@ void perft_inner(uint8_t depth, Move &move, Board &board, bool debug) {
   }
 }
 
-void Engine::perft(uint8_t depth) {
+void Engine::perft(int8_t depth) {
   Engine::NodeCount = 0;
-  uint64_t start = Engine::get_timestamp();
+  this->timer.start();
   perft_inner(depth, this->move, this->board, true);
-  uint64_t end = Engine::get_timestamp();
-  uint64_t nps = Engine::NodeCount / (end == start ? 1 : end - start) * 1000;
+  uint64_t nps = Engine::NodeCount / this->timer.stop();
   std::cout << Engine::NodeCount << " nodes " << nps << " nps\n";
 }
 

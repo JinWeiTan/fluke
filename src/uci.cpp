@@ -95,8 +95,6 @@ void parse_fen(Engine &engine, Commands &commands) {
   } else {
     engine.move.colour = Colour::White;
   }
-  engine.board.hash =
-      Engine::table.get_hash(engine.board, opposite(engine.move.colour));
 
   FEN castling = FEN{commands.next(), 0};
   engine.board.castling = Castling{};
@@ -114,11 +112,15 @@ void parse_fen(Engine &engine, Commands &commands) {
   }
 
   std::string command = commands.next();
+  engine.board.double_step = 9;
   if (command != "-") {
     engine.board.double_step = parse_square(command).x;
   }
 
   commands.count += 2;
+
+  engine.board.hash =
+      Engine::table.get_hash(engine.board, opposite(engine.move.colour));
 }
 
 void parse_go(Engine &engine, Commands &commands) {

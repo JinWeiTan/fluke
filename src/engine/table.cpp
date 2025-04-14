@@ -1,5 +1,5 @@
-#include <iostream>
 #include "table.hpp"
+#include <iostream>
 
 uint64_t Random::generate() {
   uint64_t x = this->a;

@@ -26,7 +26,7 @@ struct Hash {
   uint64_t board[8][8][2][6];
   uint64_t colour;
   uint64_t castling[4];
-  uint64_t double_step[4];
+  uint64_t double_step[8];
 };
 
 static const size_t TableSize = 0x10000;

@@ -63,44 +63,69 @@ void move_piece(Board &board, Square from, Square to) {
   board.board[from.x][from.y] = EMPTY;
 }
 
+void move_piece_type(Board &board, Square from, Square to, PieceType type) {
+  Piece &piece = board.pieces[board.board[from.x][from.y]];
+  board.hash ^=
+      Engine::table.hash.board[from.x][from.y][piece.colour][piece.type];
+  board.hash ^= Engine::table.hash.board[to.x][to.y][piece.colour][type];
+  piece.square = to;
+  board.board[to.x][to.y] = board.board[from.x][from.y];
+  board.board[from.x][from.y] = EMPTY;
+}
+
 void handle_rook_castling(Board &board, Colour colour, Square square) {
   if (colour == Colour::White) {
     if (square == Square{0, 0}) {
+      if (board.castling.white_kingside) {
+        board.hash ^= Engine::table.hash.castling[0];
+      }
       board.castling.white_kingside = false;
-      board.hash ^= Engine::table.hash.castling[0];
     } else if (square == Square{7, 0}) {
+      if (board.castling.white_queenside) {
+        board.hash ^= Engine::table.hash.castling[1];
+      }
       board.castling.white_queenside = false;
-      board.hash ^= Engine::table.hash.castling[1];
     }
   } else {
     if (square == Square{0, 7}) {
+      if (board.castling.black_kingside) {
+        board.hash ^= Engine::table.hash.castling[2];
+      }
       board.castling.black_kingside = false;
-      board.hash ^= Engine::table.hash.castling[2];
     } else if (square == Square{7, 7}) {
+      if (board.castling.black_queenside) {
+        board.hash ^= Engine::table.hash.castling[3];
+      }
       board.castling.black_queenside = false;
-      board.hash ^= Engine::table.hash.castling[3];
     }
   }
 }
 
 void handle_king_castling(Board &board, Colour colour) {
   if (colour == Colour::White) {
+    if (board.castling.white_kingside) {
+      board.hash ^= Engine::table.hash.castling[0];
+    }
+    if (board.castling.white_queenside) {
+      board.hash ^= Engine::table.hash.castling[1];
+    }
     board.castling.white_kingside = false;
     board.castling.white_queenside = false;
-    board.hash ^= Engine::table.hash.castling[0];
-    board.hash ^= Engine::table.hash.castling[1];
   } else {
+    if (board.castling.black_kingside) {
+      board.hash ^= Engine::table.hash.castling[2];
+    }
+    if (board.castling.black_queenside) {
+      board.hash ^= Engine::table.hash.castling[3];
+    }
     board.castling.black_kingside = false;
     board.castling.black_queenside = false;
-    board.hash ^= Engine::table.hash.castling[2];
-    board.hash ^= Engine::table.hash.castling[3];
   }
 }
 
 Board Board::make_move(Move &move) {
   Board board = *this;
   Piece &piece = board.pieces[board.board[move.from.x][move.from.y]];
-  piece.type = move.piece;
   if (board.board[move.to.x][move.to.y] != EMPTY) {
     Piece &target = board.pieces[board.board[move.to.x][move.to.y]];
     board.hash ^= Engine::table.hash
@@ -111,10 +136,11 @@ Board Board::make_move(Move &move) {
       handle_rook_castling(board, target.colour, move.to);
     }
   }
-  move_piece(board, move.from, move.to);
+  move_piece_type(board, move.from, move.to, move.piece);
+  piece.type = move.piece;
   board.hash ^= Engine::table.hash.colour;
 
-  if (board.double_step <= 9) {
+  if (board.double_step < 9) {
     board.hash ^= Engine::table.hash.double_step[board.double_step];
     board.double_step = 9;
   }

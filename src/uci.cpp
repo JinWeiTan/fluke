@@ -192,7 +192,7 @@ void parse_position(UCI &uci, Commands &commands) {
 }
 
 void UCI::run_loop() {
-  std::cout << "id name Fluke 5\n";
+  std::cout << "id name Fluke 6\n";
   std::cout << "id author JinWeiTan\n";
 
   std::cout << "option name Threads type spin default 1 min 1 max 1\n";

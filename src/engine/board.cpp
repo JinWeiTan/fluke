@@ -203,7 +203,7 @@ bool Board::get_move(std::vector<Move> &moves, Square &from, Square &to,
       (this->board[to.x][to.y] != EMPTY) || (type == MoveType::EnPassant);
   int8_t score = 0;
   if (this->board[to.x][to.y] != EMPTY) {
-    score = 10 * (this->pieces[this->board[to.x][to.y]].type - piece.type);
+    score = 10 * this->pieces[this->board[to.x][to.y]].type - piece.type;
   } else if (type >= MoveType::PromoteKnight) {
     score = type - MoveType::PromoteKnight + 1;
   } else if (attacks.attacks[to.x][to.y]) {

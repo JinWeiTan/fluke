@@ -23,12 +23,16 @@ struct Engine {
   Board board;
   Move move;
   Timer timer;
+  std::vector<uint64_t> history;
   uint64_t static NodeCount;
 
   static Table table;
   static Engine init();
   BestMove search_moves(uint8_t max_depth, double time, bool debug);
   BestMove search_moves_depth(uint8_t max_depth);
+  BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
+                            int beta, uint8_t max_depth, double allocated);
   void perft(int8_t depth);
+  bool is_repetition(uint64_t hash);
   static Eval evaluate(Board &board, Colour colour);
 };

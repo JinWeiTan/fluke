@@ -1,9 +1,9 @@
 #include "engine.hpp"
 #include <algorithm>
 #include <chrono>
+#include <float.h>
 #include <iostream>
 #include <math.h>
-#include <float.h>
 
 Eval WhitePawnWeights[8][8];
 Eval BlackPawnWeights[8][8];
@@ -51,16 +51,21 @@ Engine Engine::init() {
       WhiteKingWeights[i][j] = (7 - j) * 20;
     }
   }
-  return Engine{Board::init(), Move{}};
+  std::vector<uint64_t> history = {};
+  history.reserve(200);
+  return Engine{Board::init(), Move{}, Timer{}, history};
 }
 
-BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
-                            int beta, uint8_t max_depth, double allocated,
-                            Timer &timer) {
+BestMove Engine::search_moves_inner(int8_t depth, Move &move, Board &board,
+                                    int alpha, int beta, uint8_t max_depth,
+                                    double allocated) {
   Engine::NodeCount += 1;
 
   if (timer.stop() > allocated) {
     return BestMove{0, false, Move{}, true};
+  }
+  if (depth != max_depth && this->is_repetition(board.hash)) {
+    return BestMove{Eval(-depth), true};
   }
 
   int alphaOrig = alpha;
@@ -83,12 +88,8 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
   }
 
   if ((depth <= 0 && !move.takes) || depth <= -1) {
-    Eval eval = Engine::evaluate(board, move.colour);
-    // Engine::table.set_entry(board.hash, TableEntry{eval, 0,
-    // EntryType::Exact});
-    return BestMove{eval, false};
+    return BestMove{Engine::evaluate(board, move.colour), false};
   }
-
   std::vector<Move> moves;
   bool check = board.get_moves(moves, opposite(move.colour));
   if (bestMove != UINT8_MAX) {
@@ -96,12 +97,8 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
   }
   std::sort(moves.begin(), moves.end(),
             [](Move &a, Move &b) { return a.score > b.score; });
-
   if (moves.size() == 0) {
-    Eval eval = check ? (-10000 - depth) : -depth;
-    // Engine::table.set_entry(board.hash, TableEntry{eval, 0,
-    // EntryType::Exact});
-    return BestMove{eval, true};
+    return BestMove{Eval(check ? (-10000 - depth) : -depth), true};
   }
 
   BestMove best = BestMove{EvalMin, false};
@@ -113,9 +110,11 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
     }
 
     Board new_board = board.make_move(moves[i]);
-    BestMove result = search_moves_inner(depth - 1, moves[i], new_board, -beta,
-                                         -alpha, max_depth, allocated, timer);
-    if(result.cancelled) {
+    this->history.push_back(new_board.hash);
+    BestMove result = this->search_moves_inner(
+        depth - 1, moves[i], new_board, -beta, -alpha, max_depth, allocated);
+    this->history.pop_back();
+    if (result.cancelled) {
       return result;
     }
     if (-result.eval > best.eval) {
@@ -139,11 +138,15 @@ BestMove search_moves_inner(int8_t depth, Move &move, Board &board, int alpha,
 }
 
 BestMove Engine::search_moves_depth(uint8_t max_depth) {
+  this->history.push_back(this->board.hash);
   BestMove move;
   for (size_t depth = 1; depth <= max_depth; depth++) {
-    move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax,
-                              depth, DBL_MAX, this->timer);
+    move = this->search_moves_inner(depth, this->move, this->board, EvalMin,
+                                    EvalMax, depth, DBL_MAX);
   }
+  this->board = this->board.make_move(move.move);
+  this->move = move.move;
+  this->history.push_back(this->board.hash);
   return move;
 }
 
@@ -153,10 +156,11 @@ BestMove Engine::search_moves(uint8_t max_depth, double time, bool debug) {
   }
   double allocated = time * 0.025;
   this->timer.start();
+  this->history.push_back(this->board.hash);
   BestMove move;
   for (size_t depth = 1; depth <= max_depth; depth++) {
-    BestMove best_move = search_moves_inner(depth, this->move, this->board, EvalMin, EvalMax,
-                              depth, allocated, this->timer);
+    BestMove best_move = this->search_moves_inner(
+        depth, this->move, this->board, EvalMin, EvalMax, depth, allocated);
     auto duration = this->timer.stop();
     if (best_move.cancelled) {
       if (debug) {
@@ -171,6 +175,9 @@ BestMove Engine::search_moves(uint8_t max_depth, double time, bool debug) {
                 << " time " << duration << "s\n";
     }
   }
+  this->board = this->board.make_move(move.move);
+  this->move = move.move;
+  this->history.push_back(this->board.hash);
   return move;
 }
 
@@ -199,6 +206,18 @@ void Engine::perft(int8_t depth) {
   perft_inner(depth, this->move, this->board, true);
   uint64_t nps = Engine::NodeCount / this->timer.stop();
   std::cout << Engine::NodeCount << " nodes " << nps << " nps\n";
+}
+
+bool Engine::is_repetition(uint64_t hash) {
+  for (int i = -5; i >= -9; i -= 2) {
+    if ((this->history.size() + i) < 0) {
+      return false;
+    }
+    if (this->history[this->history.size() + i] == hash) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Eval Engine::evaluate(Board &board, Colour colour) {

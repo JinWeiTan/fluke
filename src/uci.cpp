@@ -57,6 +57,8 @@ void parse_move(Engine &engine, std::string &command) {
 }
 
 void parse_fen(Engine &engine, Commands &commands) {
+  engine.history.clear();
+  engine.history.reserve(300);
   for (size_t i = 0; i < 8; i++) {
     for (size_t j = 0; j < 8; j++) {
       engine.board.board[i][j] = EMPTY;
@@ -68,6 +70,7 @@ void parse_fen(Engine &engine, Commands &commands) {
 
   FEN placement = FEN{commands.next(), 0};
   std::map<char, int> PieceMap = FENPieceMap;
+  std::map<char, int> PieceCount = FENPieceCount;
   int x = 0, y = 0;
   engine.board.piece_count = 0;
   while (!placement.end()) {
@@ -78,14 +81,19 @@ void parse_fen(Engine &engine, Commands &commands) {
     } else if (isdigit(ch)) {
       x += ch - '0';
     } else {
-      Piece &piece = engine.board.pieces[PieceMap[ch]];
+      char name = (PieceCount[ch] == 0) ? (ch > 'a' ? 'p' : 'P') : ch;
+      PieceCount[name]--;
+      Piece &piece = engine.board.pieces[PieceMap[name]];
       piece.square.x = 7 - x, piece.square.y = 7 - y;
+      if (name != ch) {
+        piece.type = PieceType(PromoteMap.at(ch) + 1);
+      }
       engine.board.board[7 - x][7 - y] = piece.id;
       piece.taken = false;
       if (piece.type > PieceType::Pawn && piece.type < PieceType::King) {
         engine.board.piece_count += 1;
       }
-      PieceMap[ch] += 1;
+      PieceMap[name] += 1;
       x += 1;
     }
   }
@@ -143,8 +151,6 @@ void parse_go(Engine &engine, Commands &commands) {
   int time = engine.move.colour == Colour::White ? btime : wtime;
   BestMove best_move = engine.search_moves(15, double(time) / 1000, true);
   if (!best_move.end) {
-    engine.board = engine.board.make_move(best_move.move);
-    engine.move = best_move.move;
     std::cout << "bestmove " << engine.move.format() << std::endl;
   }
 }
@@ -186,7 +192,7 @@ void parse_position(UCI &uci, Commands &commands) {
 }
 
 void UCI::run_loop() {
-  std::cout << "id name Fluke 4\n";
+  std::cout << "id name Fluke 5\n";
   std::cout << "id author JinWeiTan\n";
 
   std::cout << "option name Threads type spin default 1 min 1 max 1\n";
@@ -208,6 +214,8 @@ void UCI::run_loop() {
       std::cout << "readyok\n";
     } else if (command == "ucinewgame") {
       this->engine.board = Board::init();
+      engine.history.clear();
+      engine.history.reserve(300);
       this->started = false;
     } else if (command == "display") {
       std::cout << this->engine.board.format() << "\n";

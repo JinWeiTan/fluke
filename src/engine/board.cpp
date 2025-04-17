@@ -283,14 +283,6 @@ bool Board::is_check(Colour colour) {
          is_check_inner(square, colour, *this, -1, 0, PieceType::Rook) ||
          is_check_inner(square, colour, *this, 0, 1, PieceType::Rook) ||
          is_check_inner(square, colour, *this, 0, -1, PieceType::Rook) ||
-         is_check_single(square, colour, *this, 1, 2, PieceType::Knight) ||
-         is_check_single(square, colour, *this, 1, -2, PieceType::Knight) ||
-         is_check_single(square, colour, *this, -1, 2, PieceType::Knight) ||
-         is_check_single(square, colour, *this, -1, -2, PieceType::Knight) ||
-         is_check_single(square, colour, *this, 2, 1, PieceType::Knight) ||
-         is_check_single(square, colour, *this, 2, -1, PieceType::Knight) ||
-         is_check_single(square, colour, *this, -2, 1, PieceType::Knight) ||
-         is_check_single(square, colour, *this, -2, -1, PieceType::Knight) ||
          is_check_single(square, colour, *this, 1, step, PieceType::Pawn) ||
          is_check_single(square, colour, *this, -1, step, PieceType::Pawn);
 }
